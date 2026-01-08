@@ -290,7 +290,9 @@
         }
         
         .chat-message-author.moderator::before {
-            content: '⭐ ';
+            content: '[MOD] ';
+            font-weight: 700;
+            font-size: 0.75rem;
         }
         
         .chat-message-time {
@@ -811,9 +813,109 @@
         }
         
         // =============================================
+        // BROWSER FINGERPRINTING
+        // =============================================
+        async function generateFingerprint() {
+            const components = [];
+            
+            // Screen properties
+            components.push(screen.width + 'x' + screen.height);
+            components.push(screen.colorDepth);
+            components.push(window.devicePixelRatio || 1);
+            
+            // Timezone
+            components.push(Intl.DateTimeFormat().resolvedOptions().timeZone);
+            components.push(new Date().getTimezoneOffset());
+            
+            // Language
+            components.push(navigator.language);
+            components.push((navigator.languages || []).join(','));
+            
+            // Platform & hardware
+            components.push(navigator.platform);
+            components.push(navigator.hardwareConcurrency || 'unknown');
+            components.push(navigator.maxTouchPoints || 0);
+            
+            // Browser capabilities
+            components.push('localStorage' in window);
+            components.push('sessionStorage' in window);
+            components.push('indexedDB' in window);
+            components.push('cookieEnabled' in navigator && navigator.cookieEnabled);
+            
+            // WebGL renderer (graphics card info)
+            try {
+                const canvas = document.createElement('canvas');
+                const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        components.push(gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL));
+                        components.push(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL));
+                    }
+                }
+            } catch (e) {
+                components.push('webgl-error');
+            }
+            
+            // Canvas fingerprint
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                ctx.textBaseline = 'top';
+                ctx.font = '14px Arial';
+                ctx.fillStyle = '#f60';
+                ctx.fillRect(125, 1, 62, 20);
+                ctx.fillStyle = '#069';
+                ctx.fillText('Clawson.TV', 2, 15);
+                ctx.fillStyle = 'rgba(102, 204, 0, 0.7)';
+                ctx.fillText('Clawson.TV', 4, 17);
+                components.push(canvas.toDataURL().slice(-50));
+            } catch (e) {
+                components.push('canvas-error');
+            }
+            
+            // Audio fingerprint (simplified)
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                components.push(audioContext.sampleRate);
+                audioContext.close();
+            } catch (e) {
+                components.push('audio-error');
+            }
+            
+            // Create hash of all components
+            const fingerprintString = components.join('|||');
+            const hash = await hashString(fingerprintString);
+            return hash;
+        }
+        
+        async function hashString(str) {
+            const encoder = new TextEncoder();
+            const data = encoder.encode(str);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        // =============================================
         // CHAT SYSTEM
         // =============================================
         async function initChat() {
+            // Generate browser fingerprint
+            const fingerprint = await generateFingerprint();
+            
+            // Check if this fingerprint is banned
+            const { data: bannedFingerprint } = await supabaseClient
+                .from('banned_fingerprints')
+                .select('id')
+                .eq('fingerprint', fingerprint)
+                .single();
+            
+            if (bannedFingerprint) {
+                showBannedState();
+                return;
+            }
+            
             // Check for saved username in cookie
             const savedUser = getChatCookie();
             
@@ -822,7 +924,17 @@
                 const userStatus = await checkUserStatus(savedUser.id);
                 if (userStatus && !userStatus.is_banned) {
                     chatUser = userStatus;
+                    chatUser.fingerprint = fingerprint; // Store for later use
                     isModerator = chatUser.is_moderator;
+                    
+                    // Update fingerprint if changed
+                    if (userStatus.fingerprint !== fingerprint) {
+                        await supabaseClient
+                            .from('chat_users')
+                            .update({ fingerprint })
+                            .eq('id', userStatus.id);
+                    }
+                    
                     showChatInterface();
                     await loadChatMessages();
                     subscribeToChatMessages();
@@ -832,6 +944,9 @@
                     return;
                 }
             }
+            
+            // Store fingerprint for user creation
+            window.currentFingerprint = fingerprint;
             
             // Show username setup
             setupUsernameForm();
@@ -917,6 +1032,20 @@
                 localStorage.setItem('chat_client_id', clientId);
             }
             
+            const fingerprint = window.currentFingerprint;
+            
+            // Check if fingerprint is already associated with a banned user
+            const { data: existingBannedUser } = await supabaseClient
+                .from('chat_users')
+                .select('*')
+                .eq('fingerprint', fingerprint)
+                .eq('is_banned', true)
+                .single();
+            
+            if (existingBannedUser) {
+                return { is_banned: true };
+            }
+            
             // Try to find existing user by client ID
             const { data: existingUser } = await supabaseClient
                 .from('chat_users')
@@ -925,25 +1054,27 @@
                 .single();
             
             if (existingUser) {
-                // Update username if changed
-                if (existingUser.username !== username) {
-                    const { data: updated } = await supabaseClient
-                        .from('chat_users')
-                        .update({ username, last_seen: new Date().toISOString() })
-                        .eq('id', existingUser.id)
-                        .select()
-                        .single();
-                    return updated || existingUser;
-                }
-                return existingUser;
+                // Update username and fingerprint if changed
+                const updates = { last_seen: new Date().toISOString() };
+                if (existingUser.username !== username) updates.username = username;
+                if (existingUser.fingerprint !== fingerprint) updates.fingerprint = fingerprint;
+                
+                const { data: updated } = await supabaseClient
+                    .from('chat_users')
+                    .update(updates)
+                    .eq('id', existingUser.id)
+                    .select()
+                    .single();
+                return updated || existingUser;
             }
             
-            // Create new user
+            // Create new user with fingerprint
             const { data: newUser, error } = await supabaseClient
                 .from('chat_users')
                 .insert({
                     username,
                     client_id: clientId,
+                    fingerprint,
                     is_moderator: false,
                     is_banned: false
                 })
@@ -1231,13 +1362,35 @@
         async function banUser(userId) {
             if (!isModerator) return;
             
-            if (!confirm('Are you sure you want to ban this user?')) return;
+            if (!confirm('Are you sure you want to ban this user? This will also block their device.')) return;
             
             try {
+                // Get user's fingerprint
+                const { data: userToBan } = await supabaseClient
+                    .from('chat_users')
+                    .select('fingerprint, username')
+                    .eq('id', userId)
+                    .single();
+                
+                // Ban the user
                 await supabaseClient
                     .from('chat_users')
                     .update({ is_banned: true })
                     .eq('id', userId);
+                
+                // Also add fingerprint to banned list if available
+                if (userToBan?.fingerprint) {
+                    await supabaseClient
+                        .from('banned_fingerprints')
+                        .upsert({ 
+                            fingerprint: userToBan.fingerprint,
+                            banned_by: chatUser.id,
+                            original_username: userToBan.username,
+                            created_at: new Date().toISOString()
+                        }, { 
+                            onConflict: 'fingerprint' 
+                        });
+                }
                 
                 // Add system message
                 await supabaseClient
@@ -1258,10 +1411,26 @@
             if (!isModerator) return;
             
             try {
+                // Get user's fingerprint
+                const { data: userToUnban } = await supabaseClient
+                    .from('chat_users')
+                    .select('fingerprint')
+                    .eq('id', userId)
+                    .single();
+                
+                // Unban the user
                 await supabaseClient
                     .from('chat_users')
                     .update({ is_banned: false })
                     .eq('id', userId);
+                
+                // Also remove fingerprint from banned list
+                if (userToUnban?.fingerprint) {
+                    await supabaseClient
+                        .from('banned_fingerprints')
+                        .delete()
+                        .eq('fingerprint', userToUnban.fingerprint);
+                }
                     
                 loadModPanelData();
             } catch (err) {
