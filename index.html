@@ -1,0 +1,1742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Broadcast | Clawson.TV</title>
+    
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
+            color: white;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #222;
+            margin-bottom: 20px;
+        }
+        
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+        
+        /* Main Layout - Video+Banner on left, Chat on right */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+        }
+        
+        /* Left column: Video + Banner */
+        .video-column {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .video-container {
+            aspect-ratio: 16/9;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+        
+        .video-container > div {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* Banner below video */
+        .content-banner {
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px 24px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .content-banner .banner-text {
+            flex: 1;
+        }
+        
+        .content-banner h2 {
+            font-size: 1.1rem;
+            margin-bottom: 6px;
+            color: #4ade80;
+        }
+        
+        .content-banner p {
+            color: #aaa;
+            line-height: 1.5;
+            font-size: 0.95rem;
+        }
+        
+        .content-banner .cta-button {
+            display: inline-block;
+            background: #4ade80;
+            color: #000;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            text-align: center;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+        
+        .content-banner .cta-button:hover {
+            background: #22c55e;
+        }
+        
+        /* Right column: Chat */
+        .chat-column {
+            display: flex;
+            flex-direction: column;
+            background: #1a1a1a;
+            border-radius: 12px;
+            overflow: hidden;
+            min-height: 500px;
+            max-height: calc(100vh - 160px);
+        }
+        
+        .chat-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid #333;
+            font-weight: 600;
+            color: #fff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chat-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .online-count {
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: 400;
+        }
+        
+        .chat-user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+        
+        .chat-user-info .username {
+            color: #4ade80;
+            cursor: pointer;
+        }
+        
+        .chat-user-info .username:hover {
+            text-decoration: underline;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 16px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .chat-placeholder {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+            text-align: center;
+            padding: 40px;
+        }
+        
+        /* Username Setup Modal */
+        .username-setup {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            text-align: center;
+        }
+        
+        .username-setup h3 {
+            margin-bottom: 8px;
+            color: #fff;
+        }
+        
+        .username-setup p {
+            color: #888;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        
+        .username-setup input {
+            width: 100%;
+            max-width: 250px;
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 1rem;
+            margin-bottom: 12px;
+            text-align: center;
+        }
+        
+        .username-setup input:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+        
+        .username-setup button {
+            background: #4ade80;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 32px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .username-setup button:hover {
+            background: #22c55e;
+        }
+        
+        .username-setup button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        .username-error {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 8px;
+        }
+        
+        /* Chat Messages */
+        .chat-message {
+            padding: 8px 12px;
+            background: #252525;
+            border-radius: 8px;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chat-message.system {
+            background: #1e3a5f;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #7dd3fc;
+        }
+        
+        .chat-message.deleted {
+            opacity: 0.5;
+            font-style: italic;
+        }
+        
+        .chat-message-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 4px;
+        }
+        
+        .chat-message-author {
+            font-weight: 600;
+            color: #4ade80;
+            font-size: 0.9rem;
+        }
+        
+        .chat-message-author.moderator {
+            color: #f59e0b;
+        }
+        
+        .chat-message-author.moderator::before {
+            content: '⭐ ';
+        }
+        
+        .chat-message-time {
+            font-size: 0.75rem;
+            color: #666;
+        }
+        
+        .chat-message-content {
+            color: #ddd;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+        
+        .chat-message-actions {
+            display: none;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        
+        .chat-message:hover .chat-message-actions {
+            display: flex;
+        }
+        
+        .chat-message-actions button {
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 0.75rem;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        
+        .chat-message-actions button:hover {
+            background: #333;
+            color: #fff;
+        }
+        
+        .chat-message-actions button.delete:hover {
+            background: #7f1d1d;
+            color: #ef4444;
+        }
+        
+        .chat-message-actions button.ban:hover {
+            background: #7f1d1d;
+            color: #ef4444;
+        }
+        
+        .chat-input-area {
+            padding: 16px;
+            border-top: 1px solid #333;
+        }
+        
+        .chat-input-wrapper {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            background: #2a2a2a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 0.95rem;
+        }
+        
+        .chat-input:focus {
+            outline: none;
+            border-color: #4ade80;
+        }
+        
+        .chat-input::placeholder {
+            color: #666;
+        }
+        
+        .chat-send-btn {
+            background: #4ade80;
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 20px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .chat-send-btn:hover {
+            background: #22c55e;
+        }
+        
+        .chat-send-btn:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        /* Banned state */
+        .chat-banned {
+            padding: 24px;
+            text-align: center;
+            color: #ef4444;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .chat-banned h3 {
+            margin-bottom: 8px;
+        }
+        
+        .chat-banned p {
+            color: #888;
+            font-size: 0.9rem;
+        }
+        
+        /* Timeout indicator */
+        .timeout-notice {
+            background: #7f1d1d;
+            color: #fca5a5;
+            padding: 8px 16px;
+            text-align: center;
+            font-size: 0.85rem;
+        }
+        
+        /* Mobile Layout */
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .chat-column {
+                min-height: 400px;
+                max-height: 500px;
+            }
+            
+            .content-banner {
+                flex-direction: column;
+                text-align: center;
+                gap: 16px;
+            }
+            
+            .content-banner .cta-button {
+                width: 100%;
+            }
+        }
+        
+        /* Different content sections - only one visible at a time */
+        .cue-content {
+            display: none;
+        }
+        
+        .cue-content.active {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+        }
+        
+        @media (max-width: 900px) {
+            .cue-content.active {
+                flex-direction: column;
+            }
+        }
+        
+        /* Debug Panel - Hidden by default, type showDebug() in console to reveal */
+        .debug-panel {
+            display: none;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #333;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        
+        .debug-panel.visible {
+            display: block;
+        }
+        
+        .debug-panel h3 {
+            color: #f59e0b;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        
+        .debug-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 4px 0;
+            border-bottom: 1px solid #222;
+        }
+        
+        .debug-row:last-child {
+            border-bottom: none;
+        }
+        
+        .debug-label {
+            color: #666;
+        }
+        
+        .debug-value {
+            color: #4ade80;
+        }
+        
+        .debug-value.live {
+            color: #ef4444;
+        }
+        
+        .cue-list {
+            margin-top: 12px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        
+        .cue-item {
+            padding: 4px 8px;
+            margin: 2px 0;
+            background: #222;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .cue-item.active {
+            background: #4ade80;
+            color: #000;
+        }
+        
+        /* Loading state */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        
+        .error {
+            background: #7f1d1d;
+            border: 1px solid #ef4444;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        /* Mod Panel */
+        .mod-panel {
+            display: none;
+            background: #1a1a1a;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 20px;
+        }
+        
+        .mod-panel.visible {
+            display: block;
+        }
+        
+        .mod-panel h3 {
+            color: #f59e0b;
+            margin-bottom: 12px;
+            font-size: 14px;
+        }
+        
+        .mod-panel-section {
+            margin-bottom: 16px;
+        }
+        
+        .mod-panel-section h4 {
+            color: #888;
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+        
+        .banned-user-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: #252525;
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+        
+        .banned-user-item button {
+            background: #22c55e;
+            color: #000;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+        
+        .mod-toggle {
+            background: #f59e0b;
+            color: #000;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>CLAWSON.TV</h1>
+        </header>
+        
+        <div class="main-content">
+            <!-- Left Column: Video + Banner -->
+            <div class="video-column">
+                <!-- Resi Player -->
+                <div class="video-container">
+                    <div id="resi-video-player" data-embed-id="70c58906-58c6-4306-bdd8-813af42557d5"></div>
+                </div>
+                
+                <!-- Dynamic Content Banner - populated from cue data -->
+                <div class="content-banner">
+                    <div class="cue-content active" id="content-dynamic">
+                        <div class="banner-text">
+                            <h2 id="content-headline">Welcome!</h2>
+                            <p id="content-body">Thanks for joining us. The service will begin shortly.</p>
+                        </div>
+                        <a id="content-button" href="https://clawson.churchcenter.com/people/forms/409083" class="cta-button" target="_blank">Connect Card</a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Right Column: Chat -->
+            <div class="chat-column" id="chatColumn">
+                <div class="chat-header">
+                    <div class="chat-header-left">
+                        <span>💬 Live Chat</span>
+                        <span class="online-count" id="onlineCount"></span>
+                    </div>
+                    <div class="chat-user-info" id="chatUserInfo" style="display: none;">
+                        <span>Chatting as</span>
+                        <span class="username" id="currentUsername" title="Click to change"></span>
+                        <button class="mod-toggle" id="modToggle" style="display: none;">MOD</button>
+                    </div>
+                </div>
+                
+                <!-- Username Setup (shown first) -->
+                <div class="username-setup" id="usernameSetup">
+                    <h3>Join the Chat</h3>
+                    <p>Choose a display name to start chatting</p>
+                    <input type="text" id="usernameInput" placeholder="Your name" maxlength="20" autocomplete="off">
+                    <button id="usernameSubmit">Join Chat</button>
+                    <div class="username-error" id="usernameError"></div>
+                </div>
+                
+                <!-- Banned State -->
+                <div class="chat-banned" id="chatBanned" style="display: none;">
+                    <h3>⛔ You've been banned</h3>
+                    <p>You can no longer participate in this chat.</p>
+                </div>
+                
+                <!-- Timeout Notice -->
+                <div class="timeout-notice" id="timeoutNotice" style="display: none;">
+                    You are timed out. <span id="timeoutRemaining"></span>
+                </div>
+                
+                <!-- Chat Messages -->
+                <div class="chat-messages" id="chatMessages" style="display: none;">
+                    <!-- Messages will appear here -->
+                </div>
+                
+                <!-- Chat Input -->
+                <div class="chat-input-area" id="chatInputArea" style="display: none;">
+                    <div class="chat-input-wrapper">
+                        <input type="text" class="chat-input" id="chatInput" placeholder="Type a message..." maxlength="500">
+                        <button class="chat-send-btn" id="chatSendBtn">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mod Panel - Hidden by default -->
+        <div class="mod-panel" id="modPanel">
+            <h3>⭐ Moderator Panel</h3>
+            <div class="mod-panel-section">
+                <h4>Banned Users</h4>
+                <div id="bannedUsersList">
+                    <p style="color: #666; font-size: 0.85rem;">No banned users</p>
+                </div>
+            </div>
+            <div class="mod-panel-section">
+                <h4>Recent Timeouts</h4>
+                <div id="timeoutsList">
+                    <p style="color: #666; font-size: 0.85rem;">No active timeouts</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Debug Panel - Hidden by default, type showDebug() in console to reveal -->
+        <div class="debug-panel" id="debugPanel">
+            <h3>⚙️ Debug Info (remove in production)</h3>
+            <div class="debug-row">
+                <span class="debug-label">Event ID:</span>
+                <span class="debug-value" id="debugEventId">--</span>
+            </div>
+            <div class="debug-row">
+                <span class="debug-label">Mode:</span>
+                <span class="debug-value" id="debugMode">--</span>
+            </div>
+            <div class="debug-row">
+                <span class="debug-label">Service Start (local):</span>
+                <span class="debug-value" id="debugStartTime">--</span>
+            </div>
+            <div class="debug-row">
+                <span class="debug-label">Service Start (UTC):</span>
+                <span class="debug-value" id="debugStartTimeUTC">--</span>
+            </div>
+            <div class="debug-row">
+                <span class="debug-label">Timezone:</span>
+                <span class="debug-value" id="debugStartTimeStored">--</span>
+            </div>
+            <div class="debug-row">
+                <span class="debug-label">Program Time:</span>
+                <span class="debug-value" id="debugProgramTime">0:00</span>
+            </div>
+            <div class="debug-row">
+                <span class="debug-label">Video currentTime:</span>
+                <span class="debug-value" id="debugCurrentTime">--</span>
+            </div>
+            <div class="debug-row">
+                <span class="debug-label">VOD Offset:</span>
+                <span class="debug-value" id="debugOffset">--</span>
+            </div>
+            <div class="debug-row">
+                <span class="debug-label">Active Cue:</span>
+                <span class="debug-value" id="debugActiveCue">none</span>
+            </div>
+            <div class="cue-list" id="debugCueList">
+                <!-- Cues will be listed here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Resi Player Scripts -->
+    <script defer type="text/javascript" src="https://control.resi.io/webplayer/page.min.js"></script>
+    <script type="application/javascript" src="https://control.resi.io/webplayer/loader.min.js"></script>
+    
+    <script>
+        // =============================================
+        // CONFIGURATION
+        // =============================================
+        const SUPABASE_URL = 'https://qwrjctxnrbijeukarenr.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_i-32OaA57iuy6WxinSga6Q_u_0MGFPC';
+        
+        // Resi stream delay (seconds) - Resi buffers video for resilient delivery
+        // This applies to both live streaming and VOD playback
+        const RESI_DELAY = 112;
+        
+        // Chat configuration
+        const CHAT_MESSAGE_LIMIT = 100; // Max messages to display
+        const CHAT_RATE_LIMIT_MS = 1000; // Min time between messages
+        
+        // =============================================
+        // STATE
+        // =============================================
+        let supabaseClient;
+        let video = null;
+        let eventConfig = null;
+        let eventId = null;  // Will be set dynamically from most recent event
+        let cues = [];
+        let currentCue = null;
+        let programTimeInterval = null;
+        
+        // Chat state
+        let chatUser = null;
+        let chatMessages = [];
+        let lastMessageTime = 0;
+        let isModerator = false;
+        let isTimedOut = false;
+        let timeoutEndTime = null;
+        let timeoutCheckInterval = null;
+        
+        // =============================================
+        // INITIALIZE
+        // =============================================
+        async function init() {
+            // Initialize Supabase client
+            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            
+            // Load event configuration (gets most recent event)
+            await loadEventConfig();
+            
+            if (!eventConfig) {
+                document.getElementById('debugEventId').textContent = 'No events found';
+                return;
+            }
+            
+            // Load cues for this event
+            await loadCues();
+            
+            // Set up real-time subscription for new cues
+            subscribeToChanges();
+            
+            // Find the video player
+            initVideoTracking();
+            
+            // Start program time tracking (for live mode)
+            if (eventConfig?.is_live) {
+                startLiveTimeTracking();
+            }
+            
+            // Initialize chat
+            initChat();
+        }
+        
+        // =============================================
+        // CHAT SYSTEM
+        // =============================================
+        async function initChat() {
+            // Check for saved username in cookie
+            const savedUser = getChatCookie();
+            
+            if (savedUser) {
+                // Verify the user still exists and isn't banned
+                const userStatus = await checkUserStatus(savedUser.id);
+                if (userStatus && !userStatus.is_banned) {
+                    chatUser = userStatus;
+                    isModerator = chatUser.is_moderator;
+                    showChatInterface();
+                    await loadChatMessages();
+                    subscribeToChatMessages();
+                    return;
+                } else if (userStatus && userStatus.is_banned) {
+                    showBannedState();
+                    return;
+                }
+            }
+            
+            // Show username setup
+            setupUsernameForm();
+        }
+        
+        function setupUsernameForm() {
+            const input = document.getElementById('usernameInput');
+            const submit = document.getElementById('usernameSubmit');
+            const error = document.getElementById('usernameError');
+            
+            // Handle enter key
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleUsernameSubmit();
+                }
+            });
+            
+            submit.addEventListener('click', handleUsernameSubmit);
+            
+            async function handleUsernameSubmit() {
+                const username = input.value.trim();
+                
+                if (username.length < 2) {
+                    error.textContent = 'Name must be at least 2 characters';
+                    return;
+                }
+                
+                if (username.length > 20) {
+                    error.textContent = 'Name must be 20 characters or less';
+                    return;
+                }
+                
+                // Check for inappropriate content (basic filter)
+                if (containsBadWords(username)) {
+                    error.textContent = 'Please choose a different name';
+                    return;
+                }
+                
+                submit.disabled = true;
+                submit.textContent = 'Joining...';
+                error.textContent = '';
+                
+                try {
+                    // Create or get user
+                    const user = await createOrGetChatUser(username);
+                    
+                    if (user.is_banned) {
+                        showBannedState();
+                        return;
+                    }
+                    
+                    chatUser = user;
+                    isModerator = user.is_moderator;
+                    
+                    // Save to cookie
+                    setChatCookie(user);
+                    
+                    // Show chat interface
+                    showChatInterface();
+                    await loadChatMessages();
+                    subscribeToChatMessages();
+                    
+                } catch (err) {
+                    error.textContent = 'Failed to join chat. Please try again.';
+                    submit.disabled = false;
+                    submit.textContent = 'Join Chat';
+                }
+            }
+        }
+        
+        async function createOrGetChatUser(username) {
+            // Generate a unique client ID if we don't have one
+            let clientId = localStorage.getItem('chat_client_id');
+            if (!clientId) {
+                clientId = 'client_' + Math.random().toString(36).substring(2, 15);
+                localStorage.setItem('chat_client_id', clientId);
+            }
+            
+            // Try to find existing user by client ID
+            const { data: existingUser } = await supabaseClient
+                .from('chat_users')
+                .select('*')
+                .eq('client_id', clientId)
+                .single();
+            
+            if (existingUser) {
+                // Update username if changed
+                if (existingUser.username !== username) {
+                    const { data: updated } = await supabaseClient
+                        .from('chat_users')
+                        .update({ username, last_seen: new Date().toISOString() })
+                        .eq('id', existingUser.id)
+                        .select()
+                        .single();
+                    return updated || existingUser;
+                }
+                return existingUser;
+            }
+            
+            // Create new user
+            const { data: newUser, error } = await supabaseClient
+                .from('chat_users')
+                .insert({
+                    username,
+                    client_id: clientId,
+                    is_moderator: false,
+                    is_banned: false
+                })
+                .select()
+                .single();
+            
+            if (error) throw error;
+            return newUser;
+        }
+        
+        async function checkUserStatus(userId) {
+            const { data } = await supabaseClient
+                .from('chat_users')
+                .select('*')
+                .eq('id', userId)
+                .single();
+            return data;
+        }
+        
+        function showChatInterface() {
+            document.getElementById('usernameSetup').style.display = 'none';
+            document.getElementById('chatMessages').style.display = 'flex';
+            document.getElementById('chatInputArea').style.display = 'block';
+            document.getElementById('chatUserInfo').style.display = 'flex';
+            document.getElementById('currentUsername').textContent = chatUser.username;
+            
+            // Show mod toggle if moderator
+            if (isModerator) {
+                document.getElementById('modToggle').style.display = 'inline-block';
+                document.getElementById('modToggle').addEventListener('click', toggleModPanel);
+            }
+            
+            // Username click to change
+            document.getElementById('currentUsername').addEventListener('click', promptUsernameChange);
+            
+            // Chat input handlers
+            const input = document.getElementById('chatInput');
+            const sendBtn = document.getElementById('chatSendBtn');
+            
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+            
+            sendBtn.addEventListener('click', sendMessage);
+            
+            // Check for active timeout
+            checkTimeout();
+        }
+        
+        function showBannedState() {
+            document.getElementById('usernameSetup').style.display = 'none';
+            document.getElementById('chatMessages').style.display = 'none';
+            document.getElementById('chatInputArea').style.display = 'none';
+            document.getElementById('chatBanned').style.display = 'flex';
+        }
+        
+        async function loadChatMessages() {
+            const { data, error } = await supabaseClient
+                .from('chat_messages')
+                .select(`
+                    *,
+                    chat_users (
+                        username,
+                        is_moderator
+                    )
+                `)
+                .eq('event_id', eventId)
+                .order('created_at', { ascending: true })
+                .limit(CHAT_MESSAGE_LIMIT);
+            
+            if (error) {
+                console.error('Error loading messages:', error);
+                return;
+            }
+            
+            chatMessages = data || [];
+            renderChatMessages();
+            scrollToBottom();
+        }
+        
+        function subscribeToChatMessages() {
+            // Subscribe to new messages
+            supabaseClient
+                .channel('chat-messages')
+                .on('postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'chat_messages', filter: `event_id=eq.${eventId}` },
+                    async (payload) => {
+                        // Fetch the full message with user data
+                        const { data } = await supabaseClient
+                            .from('chat_messages')
+                            .select(`
+                                *,
+                                chat_users (
+                                    username,
+                                    is_moderator
+                                )
+                            `)
+                            .eq('id', payload.new.id)
+                            .single();
+                        
+                        if (data) {
+                            chatMessages.push(data);
+                            // Keep only last N messages
+                            if (chatMessages.length > CHAT_MESSAGE_LIMIT) {
+                                chatMessages = chatMessages.slice(-CHAT_MESSAGE_LIMIT);
+                            }
+                            renderChatMessages();
+                            scrollToBottom();
+                        }
+                    }
+                )
+                .on('postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'chat_messages', filter: `event_id=eq.${eventId}` },
+                    (payload) => {
+                        // Update message (e.g., deleted)
+                        const index = chatMessages.findIndex(m => m.id === payload.new.id);
+                        if (index !== -1) {
+                            chatMessages[index] = { ...chatMessages[index], ...payload.new };
+                            renderChatMessages();
+                        }
+                    }
+                )
+                .subscribe();
+            
+            // Subscribe to user bans (for current user)
+            supabaseClient
+                .channel('chat-user-status')
+                .on('postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'chat_users', filter: `id=eq.${chatUser.id}` },
+                    (payload) => {
+                        if (payload.new.is_banned) {
+                            showBannedState();
+                        }
+                        if (payload.new.timeout_until) {
+                            handleTimeout(payload.new.timeout_until);
+                        }
+                    }
+                )
+                .subscribe();
+        }
+        
+        function renderChatMessages() {
+            const container = document.getElementById('chatMessages');
+            
+            container.innerHTML = chatMessages.map(msg => {
+                if (msg.is_deleted) {
+                    return `
+                        <div class="chat-message deleted">
+                            <div class="chat-message-content">[Message deleted]</div>
+                        </div>
+                    `;
+                }
+                
+                if (msg.is_system) {
+                    return `
+                        <div class="chat-message system">
+                            <div class="chat-message-content">${escapeHtml(msg.content)}</div>
+                        </div>
+                    `;
+                }
+                
+                const user = msg.chat_users || {};
+                const isModMessage = user.is_moderator;
+                const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                let actionsHtml = '';
+                if (isModerator && msg.user_id !== chatUser.id) {
+                    actionsHtml = `
+                        <div class="chat-message-actions">
+                            <button class="delete" onclick="deleteMessage('${msg.id}')">Delete</button>
+                            <button onclick="timeoutUser('${msg.user_id}', 300)">Timeout 5m</button>
+                            <button class="ban" onclick="banUser('${msg.user_id}')">Ban</button>
+                        </div>
+                    `;
+                }
+                
+                return `
+                    <div class="chat-message" data-message-id="${msg.id}">
+                        <div class="chat-message-header">
+                            <span class="chat-message-author ${isModMessage ? 'moderator' : ''}">${escapeHtml(user.username || 'Unknown')}</span>
+                            <span class="chat-message-time">${time}</span>
+                        </div>
+                        <div class="chat-message-content">${escapeHtml(msg.content)}</div>
+                        ${actionsHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+        
+        function scrollToBottom() {
+            const container = document.getElementById('chatMessages');
+            container.scrollTop = container.scrollHeight;
+        }
+        
+        async function sendMessage() {
+            if (isTimedOut) return;
+            
+            const input = document.getElementById('chatInput');
+            const content = input.value.trim();
+            
+            if (!content) return;
+            
+            // Rate limiting
+            const now = Date.now();
+            if (now - lastMessageTime < CHAT_RATE_LIMIT_MS) {
+                return;
+            }
+            
+            // Basic content filter
+            if (containsBadWords(content)) {
+                input.value = '';
+                return;
+            }
+            
+            lastMessageTime = now;
+            input.value = '';
+            
+            try {
+                const { error } = await supabaseClient
+                    .from('chat_messages')
+                    .insert({
+                        event_id: eventId,
+                        user_id: chatUser.id,
+                        content: content.substring(0, 500)
+                    });
+                
+                if (error) throw error;
+                
+                // Update last seen
+                await supabaseClient
+                    .from('chat_users')
+                    .update({ last_seen: new Date().toISOString() })
+                    .eq('id', chatUser.id);
+                    
+            } catch (err) {
+                console.error('Error sending message:', err);
+            }
+        }
+        
+        // =============================================
+        // MODERATION FUNCTIONS
+        // =============================================
+        async function deleteMessage(messageId) {
+            if (!isModerator) return;
+            
+            try {
+                await supabaseClient
+                    .from('chat_messages')
+                    .update({ is_deleted: true })
+                    .eq('id', messageId);
+            } catch (err) {
+                console.error('Error deleting message:', err);
+            }
+        }
+        
+        async function timeoutUser(userId, seconds) {
+            if (!isModerator) return;
+            
+            const timeoutUntil = new Date(Date.now() + seconds * 1000).toISOString();
+            
+            try {
+                await supabaseClient
+                    .from('chat_users')
+                    .update({ timeout_until: timeoutUntil })
+                    .eq('id', userId);
+                
+                // Add system message
+                await supabaseClient
+                    .from('chat_messages')
+                    .insert({
+                        event_id: eventId,
+                        user_id: chatUser.id,
+                        content: `A user has been timed out for ${Math.floor(seconds / 60)} minutes`,
+                        is_system: true
+                    });
+                    
+            } catch (err) {
+                console.error('Error timing out user:', err);
+            }
+        }
+        
+        async function banUser(userId) {
+            if (!isModerator) return;
+            
+            if (!confirm('Are you sure you want to ban this user?')) return;
+            
+            try {
+                await supabaseClient
+                    .from('chat_users')
+                    .update({ is_banned: true })
+                    .eq('id', userId);
+                
+                // Add system message
+                await supabaseClient
+                    .from('chat_messages')
+                    .insert({
+                        event_id: eventId,
+                        user_id: chatUser.id,
+                        content: 'A user has been banned from the chat',
+                        is_system: true
+                    });
+                    
+            } catch (err) {
+                console.error('Error banning user:', err);
+            }
+        }
+        
+        async function unbanUser(userId) {
+            if (!isModerator) return;
+            
+            try {
+                await supabaseClient
+                    .from('chat_users')
+                    .update({ is_banned: false })
+                    .eq('id', userId);
+                    
+                loadModPanelData();
+            } catch (err) {
+                console.error('Error unbanning user:', err);
+            }
+        }
+        
+        function handleTimeout(timeoutUntil) {
+            const endTime = new Date(timeoutUntil).getTime();
+            
+            if (endTime > Date.now()) {
+                isTimedOut = true;
+                timeoutEndTime = endTime;
+                document.getElementById('timeoutNotice').style.display = 'block';
+                document.getElementById('chatInput').disabled = true;
+                document.getElementById('chatSendBtn').disabled = true;
+                
+                updateTimeoutDisplay();
+                
+                if (timeoutCheckInterval) clearInterval(timeoutCheckInterval);
+                timeoutCheckInterval = setInterval(updateTimeoutDisplay, 1000);
+            }
+        }
+        
+        function updateTimeoutDisplay() {
+            const remaining = Math.max(0, Math.ceil((timeoutEndTime - Date.now()) / 1000));
+            
+            if (remaining <= 0) {
+                isTimedOut = false;
+                document.getElementById('timeoutNotice').style.display = 'none';
+                document.getElementById('chatInput').disabled = false;
+                document.getElementById('chatSendBtn').disabled = false;
+                if (timeoutCheckInterval) clearInterval(timeoutCheckInterval);
+                return;
+            }
+            
+            const minutes = Math.floor(remaining / 60);
+            const seconds = remaining % 60;
+            document.getElementById('timeoutRemaining').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')} remaining`;
+        }
+        
+        async function checkTimeout() {
+            const { data } = await supabaseClient
+                .from('chat_users')
+                .select('timeout_until')
+                .eq('id', chatUser.id)
+                .single();
+            
+            if (data?.timeout_until) {
+                handleTimeout(data.timeout_until);
+            }
+        }
+        
+        function toggleModPanel() {
+            const panel = document.getElementById('modPanel');
+            panel.classList.toggle('visible');
+            if (panel.classList.contains('visible')) {
+                loadModPanelData();
+            }
+        }
+        
+        async function loadModPanelData() {
+            // Load banned users
+            const { data: bannedUsers } = await supabaseClient
+                .from('chat_users')
+                .select('id, username')
+                .eq('is_banned', true);
+            
+            const bannedList = document.getElementById('bannedUsersList');
+            if (bannedUsers && bannedUsers.length > 0) {
+                bannedList.innerHTML = bannedUsers.map(u => `
+                    <div class="banned-user-item">
+                        <span>${escapeHtml(u.username)}</span>
+                        <button onclick="unbanUser('${u.id}')">Unban</button>
+                    </div>
+                `).join('');
+            } else {
+                bannedList.innerHTML = '<p style="color: #666; font-size: 0.85rem;">No banned users</p>';
+            }
+            
+            // Load active timeouts
+            const { data: timedOutUsers } = await supabaseClient
+                .from('chat_users')
+                .select('id, username, timeout_until')
+                .gt('timeout_until', new Date().toISOString());
+            
+            const timeoutsList = document.getElementById('timeoutsList');
+            if (timedOutUsers && timedOutUsers.length > 0) {
+                timeoutsList.innerHTML = timedOutUsers.map(u => {
+                    const remaining = Math.ceil((new Date(u.timeout_until).getTime() - Date.now()) / 1000 / 60);
+                    return `
+                        <div class="banned-user-item">
+                            <span>${escapeHtml(u.username)} (${remaining}m remaining)</span>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                timeoutsList.innerHTML = '<p style="color: #666; font-size: 0.85rem;">No active timeouts</p>';
+            }
+        }
+        
+        async function promptUsernameChange() {
+            const newName = prompt('Enter new display name:', chatUser.username);
+            if (!newName || newName.trim() === chatUser.username) return;
+            
+            const trimmed = newName.trim();
+            if (trimmed.length < 2 || trimmed.length > 20) {
+                alert('Name must be 2-20 characters');
+                return;
+            }
+            
+            if (containsBadWords(trimmed)) {
+                alert('Please choose a different name');
+                return;
+            }
+            
+            try {
+                const { data } = await supabaseClient
+                    .from('chat_users')
+                    .update({ username: trimmed })
+                    .eq('id', chatUser.id)
+                    .select()
+                    .single();
+                
+                if (data) {
+                    chatUser = data;
+                    setChatCookie(data);
+                    document.getElementById('currentUsername').textContent = data.username;
+                }
+            } catch (err) {
+                console.error('Error updating username:', err);
+            }
+        }
+        
+        // =============================================
+        // UTILITY FUNCTIONS
+        // =============================================
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function containsBadWords(text) {
+            // Basic filter - expand as needed
+            const badWords = ['fuck', 'shit', 'ass', 'damn', 'bitch', 'cunt', 'dick', 'cock', 'pussy'];
+            const lowerText = text.toLowerCase();
+            return badWords.some(word => lowerText.includes(word));
+        }
+        
+        function getChatCookie() {
+            const cookies = document.cookie.split(';');
+            for (const cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (name === 'chat_user') {
+                    try {
+                        return JSON.parse(decodeURIComponent(value));
+                    } catch {
+                        return null;
+                    }
+                }
+            }
+            return null;
+        }
+        
+        function setChatCookie(user) {
+            const data = { id: user.id, username: user.username };
+            const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toUTCString();
+            document.cookie = `chat_user=${encodeURIComponent(JSON.stringify(data))}; expires=${expires}; path=/; SameSite=Lax`;
+        }
+        
+        // =============================================
+        // SUPABASE DATA LOADING
+        // =============================================
+        async function loadEventConfig() {
+            try {
+                // Get the most recently created event
+                const { data, error } = await supabaseClient
+                    .from('events')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(1)
+                    .single();
+                
+                if (error) throw error;
+                
+                eventConfig = data;
+                eventId = eventConfig.event_id;
+                
+                // Update debug panel
+                document.getElementById('debugEventId').textContent = eventId;
+                document.getElementById('debugMode').textContent = eventConfig.is_live ? 'LIVE' : 'VOD';
+                document.getElementById('debugMode').classList.toggle('live', eventConfig.is_live);
+                
+                // Show start time with timezone info
+                const startDate = new Date(eventConfig.start_time);
+                const localTime = startDate.toLocaleString();
+                const utcTime = startDate.toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+                const storedTz = eventConfig.start_time.match(/[+-]\d{2}:\d{2}$/)?.[0] || 'Z';
+                document.getElementById('debugStartTime').textContent = localTime;
+                document.getElementById('debugStartTimeUTC').textContent = utcTime;
+                document.getElementById('debugStartTimeStored').textContent = `Stored as: ${eventConfig.start_time.slice(11, 19)} (UTC${storedTz})`;
+                
+                document.getElementById('debugOffset').textContent = RESI_DELAY;
+                
+                // Update Resi embed ID if specified in config
+                if (eventConfig.resi_embed_id) {
+                    const playerDiv = document.getElementById('resi-video-player');
+                    playerDiv.setAttribute('data-embed-id', eventConfig.resi_embed_id);
+                }
+                
+            } catch (err) {
+                document.getElementById('debugEventId').textContent = 'ERROR: ' + err.message;
+            }
+        }
+        
+        async function loadCues() {
+            try {
+                const { data, error } = await supabaseClient
+                    .from('cues')
+                    .select('*')
+                    .eq('event_id', eventId)
+                    .order('timestamp_seconds', { ascending: true });
+                
+                if (error) throw error;
+                
+                cues = data || [];
+                
+                // Update debug panel
+                renderCueList();
+                
+            } catch (err) {
+            }
+        }
+        
+        function subscribeToChanges() {
+            // Subscribe to cues table changes
+            supabaseClient
+                .channel('cues-realtime')
+                .on('postgres_changes', 
+                    { event: 'INSERT', schema: 'public', table: 'cues', filter: `event_id=eq.${eventId}` },
+                    (payload) => {
+                        if (!cues.find(c => c.id === payload.new.id)) {
+                            cues.push(payload.new);
+                            cues.sort((a, b) => a.timestamp_seconds - b.timestamp_seconds);
+                            renderCueList();
+                        }
+                    }
+                )
+                .on('postgres_changes',
+                    { event: 'DELETE', schema: 'public', table: 'cues', filter: `event_id=eq.${eventId}` },
+                    (payload) => {
+                        cues = cues.filter(c => c.id !== payload.old.id);
+                        renderCueList();
+                    }
+                )
+                .subscribe();
+            
+            // Subscribe to event config changes
+            supabaseClient
+                .channel('events-realtime')
+                .on('postgres_changes',
+                    { event: 'UPDATE', schema: 'public', table: 'events', filter: `event_id=eq.${eventId}` },
+                    (payload) => {
+                        eventConfig = payload.new;
+                        document.getElementById('debugMode').textContent = eventConfig.is_live ? 'LIVE' : 'VOD';
+                        document.getElementById('debugMode').classList.toggle('live', eventConfig.is_live);
+                        if (eventConfig.is_live) {
+                            startLiveTimeTracking();
+                        } else {
+                            stopLiveTimeTracking();
+                        }
+                    }
+                )
+                .subscribe();
+        }
+        
+        // =============================================
+        // VIDEO PLAYER TRACKING
+        // =============================================
+        function initVideoTracking() {
+            const checkInterval = setInterval(() => {
+                video = document.querySelector('video[data-testid="resi-video"]') ||
+                        document.querySelector('#resi-video-player video') ||
+                        document.querySelector('video');
+                
+                if (video) {
+                    clearInterval(checkInterval);
+                    attachVideoListeners();
+                    detectLiveStream();
+                }
+            }, 500);
+            
+            // Timeout after 30 seconds
+            setTimeout(() => clearInterval(checkInterval), 30000);
+        }
+        
+        function attachVideoListeners() {
+            video.addEventListener('timeupdate', onTimeUpdate);
+            video.addEventListener('seeked', onTimeUpdate);
+        }
+        
+        function detectLiveStream() {
+            // Wait a moment for video metadata to load
+            const checkLive = () => {
+                // Live streams typically have infinite or very large duration
+                const isLive = !isFinite(video.duration) || video.duration > 86400;
+                
+                if (eventConfig && eventConfig.is_live !== isLive) {
+                    eventConfig.is_live = isLive;
+                    document.getElementById('debugMode').textContent = isLive ? 'LIVE' : 'VOD';
+                    document.getElementById('debugMode').classList.toggle('live', isLive);
+                    
+                    if (isLive) {
+                        startLiveTimeTracking();
+                    } else {
+                        stopLiveTimeTracking();
+                    }
+                }
+            };
+            
+            // Check immediately and again after metadata loads
+            video.addEventListener('loadedmetadata', checkLive);
+            video.addEventListener('durationchange', checkLive);
+            setTimeout(checkLive, 2000); // Fallback check
+        }
+        
+        function onTimeUpdate() {
+            if (!eventConfig) return;
+            
+            const currentTime = video.currentTime;
+            document.getElementById('debugCurrentTime').textContent = currentTime.toFixed(1);
+            
+            // In VOD mode, use video playhead for program time
+            if (!eventConfig.is_live) {
+                const programTime = Math.max(0, currentTime - RESI_DELAY);
+                updateProgramTime(programTime);
+            }
+        }
+        
+        // =============================================
+        // LIVE TIME TRACKING
+        // =============================================
+        function startLiveTimeTracking() {
+            if (programTimeInterval) return; // Already running
+            
+            programTimeInterval = setInterval(() => {
+                if (!eventConfig?.is_live || !eventConfig?.start_time) return;
+                
+                const startTime = new Date(eventConfig.start_time).getTime();
+                const now = Date.now();
+                const programTime = Math.max(0, (now - startTime) / 1000 - RESI_DELAY);
+                
+                updateProgramTime(programTime);
+            }, 1000);
+        }
+        
+        function stopLiveTimeTracking() {
+            if (programTimeInterval) {
+                clearInterval(programTimeInterval);
+                programTimeInterval = null;
+            }
+        }
+        
+        // =============================================
+        // CUE LOGIC
+        // =============================================
+        function updateProgramTime(programTimeSeconds) {
+            // Update debug display
+            document.getElementById('debugProgramTime').textContent = formatTime(programTimeSeconds);
+            
+            // Find the active cue (latest cue that we've passed)
+            let activeCue = null;
+            for (const cue of cues) {
+                if (programTimeSeconds >= cue.timestamp_seconds) {
+                    activeCue = cue;
+                } else {
+                    break; // Cues are sorted, so we can stop here
+                }
+            }
+            
+            // Update UI if cue changed
+            if (activeCue?.id !== currentCue?.id) {
+                currentCue = activeCue;
+                updateContentPanel(activeCue);
+                updateCueListHighlight(activeCue);
+                
+                document.getElementById('debugActiveCue').textContent = 
+                    activeCue ? `${activeCue.cue_type} @ ${formatTime(activeCue.timestamp_seconds)}` : 'none';
+            }
+        }
+        
+        function updateContentPanel(cue) {
+            const headlineEl = document.getElementById('content-headline');
+            const bodyEl = document.getElementById('content-body');
+            const buttonEl = document.getElementById('content-button');
+            
+            // Default content (when no cue is active)
+            const defaults = {
+                headline: 'Welcome!',
+                body_text: 'Thanks for joining us. The service will begin shortly.',
+                button_text: 'Connect Card',
+                button_url: 'https://clawson.churchcenter.com/people/forms/409083'
+            };
+            
+            if (cue) {
+                // Use cue data, falling back to defaults if fields are empty
+                headlineEl.textContent = cue.headline || cue.cue_type.charAt(0).toUpperCase() + cue.cue_type.slice(1);
+                bodyEl.textContent = cue.body_text || '';
+                
+                if (cue.button_url && cue.button_text) {
+                    buttonEl.textContent = cue.button_text;
+                    buttonEl.href = cue.button_url;
+                    buttonEl.style.display = 'inline-block';
+                } else if (cue.button_url) {
+                    buttonEl.textContent = 'Learn More';
+                    buttonEl.href = cue.button_url;
+                    buttonEl.style.display = 'inline-block';
+                } else {
+                    // Hide button if no URL provided
+                    buttonEl.style.display = 'none';
+                }
+            } else {
+                // Show default content
+                headlineEl.textContent = defaults.headline;
+                bodyEl.textContent = defaults.body_text;
+                buttonEl.textContent = defaults.button_text;
+                buttonEl.href = defaults.button_url;
+                buttonEl.style.display = 'inline-block';
+            }
+        }
+        
+        // =============================================
+        // DEBUG UI HELPERS
+        // =============================================
+        
+        // Console commands to show/hide debug panel
+        window.showDebug = function() {
+            document.getElementById('debugPanel').classList.add('visible');
+        };
+        window.hideDebug = function() {
+            document.getElementById('debugPanel').classList.remove('visible');
+        };
+        
+        // Make moderation functions available globally
+        window.deleteMessage = deleteMessage;
+        window.timeoutUser = timeoutUser;
+        window.banUser = banUser;
+        window.unbanUser = unbanUser;
+        
+        function renderCueList() {
+            const listEl = document.getElementById('debugCueList');
+            listEl.innerHTML = cues.map(cue => `
+                <div class="cue-item" data-cue-id="${cue.id}">
+                    <span>${cue.cue_type}</span>
+                    <span>${formatTime(cue.timestamp_seconds)}</span>
+                </div>
+            `).join('');
+        }
+        
+        function updateCueListHighlight(activeCue) {
+            document.querySelectorAll('.cue-item').forEach(el => {
+                el.classList.toggle('active', el.dataset.cueId === activeCue?.id);
+            });
+        }
+        
+        function formatTime(seconds) {
+            if (!isFinite(seconds) || seconds < 0) return '0:00';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            if (h > 0) {
+                return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+        
+        // =============================================
+        // START
+        // =============================================
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
