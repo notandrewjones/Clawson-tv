@@ -118,8 +118,7 @@
             background: #1a1a1a;
             border-radius: 12px;
             overflow: hidden;
-            min-height: 500px;
-            max-height: calc(100vh - 160px);
+            height: 600px; /* Fixed height */
         }
         
         .chat-header {
@@ -130,6 +129,7 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+            flex-shrink: 0;
         }
         
         .chat-header-left {
@@ -168,6 +168,43 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            position: relative;
+        }
+        
+        /* Scroll to bottom button */
+        .scroll-to-bottom {
+            position: sticky;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #4ade80;
+            color: #000;
+            border: none;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+            z-index: 10;
+            margin-top: auto;
+            transition: background 0.2s;
+        }
+        
+        .scroll-to-bottom:hover {
+            background: #22c55e;
+        }
+        
+        .scroll-to-bottom.visible {
+            display: inline-flex;
+        }
+        
+        .scroll-to-bottom svg {
+            width: 14px;
+            height: 14px;
         }
         
         .chat-placeholder {
@@ -283,16 +320,30 @@
             font-weight: 600;
             color: #4ade80;
             font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         
         .chat-message-author.moderator {
             color: #f59e0b;
         }
         
-        .chat-message-author.moderator::before {
-            content: '[MOD] ';
+        /* Mod Badge - Squircle style */
+        .mod-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #000;
+            font-size: 0.65rem;
             font-weight: 700;
-            font-size: 0.75rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            line-height: 1.2;
         }
         
         .chat-message-time {
@@ -344,6 +395,7 @@
         .chat-input-area {
             padding: 16px;
             border-top: 1px solid #333;
+            flex-shrink: 0;
         }
         
         .chat-input-wrapper {
@@ -397,6 +449,7 @@
             text-align: center;
             background: #1a1a1a;
             border-top: 1px solid #333;
+            flex-shrink: 0;
         }
         
         .chat-banned-notice .banned-content {
@@ -419,6 +472,7 @@
             padding: 8px 16px;
             text-align: center;
             font-size: 0.85rem;
+            flex-shrink: 0;
         }
         
         /* Mobile Layout */
@@ -428,8 +482,7 @@
             }
             
             .chat-column {
-                min-height: 400px;
-                max-height: 500px;
+                height: 450px;
             }
             
             .content-banner {
@@ -660,6 +713,12 @@
                 <!-- Chat Messages -->
                 <div class="chat-messages" id="chatMessages" style="display: none;">
                     <!-- Messages will appear here -->
+                    <button class="scroll-to-bottom" id="scrollToBottomBtn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                        New messages
+                    </button>
                 </div>
                 
                 <!-- Chat Input -->
@@ -781,37 +840,36 @@
         let timeoutEndTime = null;
         let timeoutCheckInterval = null;
         
+        // Auto-scroll state
+        let autoScrollEnabled = true;
+        let isUserScrolling = false;
+        
         // =============================================
         // INITIALIZE
         // =============================================
         async function init() {
-            console.log('init() started');
-            
             // Initialize Supabase client
-            supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-            console.log('Supabase client created');
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             
-            // Load event configuration (gets most recent event)
+            // Load event configuration first (needed for event_id)
             await loadEventConfig();
-            console.log('Event config loaded:', eventConfig);
             
-            if (!eventConfig) {
-                console.log('No event config - stopping init');
-                document.getElementById('debugEventId').textContent = 'No events found';
+            if (!eventId) {
+                console.error('No event found');
                 return;
             }
             
-            // Load cues for this event
+            // Load cues
             await loadCues();
             
-            // Set up real-time subscription for new cues
+            // Subscribe to realtime changes
             subscribeToChanges();
             
-            // Find the video player
+            // Initialize video tracking when player loads
             initVideoTracking();
             
-            // Start program time tracking (for live mode)
-            if (eventConfig?.is_live) {
+            // Start live time tracking if this is a live event
+            if (eventConfig && eventConfig.is_live) {
                 startLiveTimeTracking();
             }
             
@@ -1150,8 +1208,43 @@
             
             sendBtn.addEventListener('click', sendMessage);
             
+            // Setup scroll handling
+            setupScrollHandling();
+            
             // Check for active timeout
             checkTimeout();
+        }
+        
+        function setupScrollHandling() {
+            const container = document.getElementById('chatMessages');
+            const scrollBtn = document.getElementById('scrollToBottomBtn');
+            
+            // Detect user scrolling
+            container.addEventListener('scroll', () => {
+                const isNearBottom = isScrolledNearBottom(container);
+                
+                if (isNearBottom) {
+                    // User scrolled back to bottom
+                    autoScrollEnabled = true;
+                    scrollBtn.classList.remove('visible');
+                } else {
+                    // User scrolled up
+                    autoScrollEnabled = false;
+                }
+            });
+            
+            // Scroll to bottom button click
+            scrollBtn.addEventListener('click', () => {
+                autoScrollEnabled = true;
+                scrollToBottom();
+                scrollBtn.classList.remove('visible');
+            });
+        }
+        
+        function isScrolledNearBottom(container) {
+            // Consider "near bottom" if within 100px of the bottom
+            const threshold = 100;
+            return container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
         }
         
         function showBannedState() {
@@ -1216,7 +1309,14 @@
                                 chatMessages = chatMessages.slice(-CHAT_MESSAGE_LIMIT);
                             }
                             renderChatMessages();
-                            scrollToBottom();
+                            
+                            // Only auto-scroll if enabled
+                            if (autoScrollEnabled) {
+                                scrollToBottom();
+                            } else {
+                                // Show the scroll to bottom button
+                                document.getElementById('scrollToBottomBtn').classList.add('visible');
+                            }
                         }
                     }
                 )
@@ -1229,6 +1329,14 @@
                             chatMessages[index] = { ...chatMessages[index], ...payload.new };
                             renderChatMessages();
                         }
+                    }
+                )
+                .on('postgres_changes',
+                    { event: 'DELETE', schema: 'public', table: 'chat_messages', filter: `event_id=eq.${eventId}` },
+                    (payload) => {
+                        // Remove deleted messages from the list
+                        chatMessages = chatMessages.filter(m => m.id !== payload.old.id);
+                        renderChatMessages();
                     }
                 )
                 .subscribe();
@@ -1277,7 +1385,13 @@
                                 chatMessages = chatMessages.slice(-CHAT_MESSAGE_LIMIT);
                             }
                             renderChatMessages();
-                            scrollToBottom();
+                            
+                            // Only auto-scroll if enabled
+                            if (autoScrollEnabled) {
+                                scrollToBottom();
+                            } else {
+                                document.getElementById('scrollToBottomBtn').classList.add('visible');
+                            }
                         }
                     }
                 )
@@ -1292,13 +1406,23 @@
                         }
                     }
                 )
+                .on('postgres_changes',
+                    { event: 'DELETE', schema: 'public', table: 'chat_messages', filter: `event_id=eq.${eventId}` },
+                    (payload) => {
+                        // Remove deleted messages from the list
+                        chatMessages = chatMessages.filter(m => m.id !== payload.old.id);
+                        renderChatMessages();
+                    }
+                )
                 .subscribe();
         }
         
         function renderChatMessages() {
             const container = document.getElementById('chatMessages');
+            const scrollBtn = document.getElementById('scrollToBottomBtn');
             
-            container.innerHTML = chatMessages.map(msg => {
+            // Save reference to scroll button before clearing
+            const messagesHtml = chatMessages.map(msg => {
                 if (msg.is_deleted) {
                     return `
                         <div class="chat-message deleted">
@@ -1319,8 +1443,11 @@
                 const isModMessage = user.is_moderator;
                 const time = new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 
+                // Mod badge HTML
+                const modBadge = isModMessage ? '<span class="mod-badge">MOD</span>' : '';
+                
                 let actionsHtml = '';
-                if (isModerator && msg.user_id !== chatUser.id) {
+                if (isModerator && msg.user_id !== chatUser?.id) {
                     actionsHtml = `
                         <div class="chat-message-actions">
                             <button class="delete" onclick="deleteMessage('${msg.id}')">Delete</button>
@@ -1331,9 +1458,9 @@
                 }
                 
                 return `
-                    <div class="chat-message" data-message-id="${msg.id}">
+                    <div class="chat-message" data-message-id="${msg.id}" data-user-id="${msg.user_id}">
                         <div class="chat-message-header">
-                            <span class="chat-message-author ${isModMessage ? 'moderator' : ''}">${escapeHtml(user.username || 'Unknown')}</span>
+                            <span class="chat-message-author ${isModMessage ? 'moderator' : ''}">${modBadge}${escapeHtml(user.username || 'Unknown')}</span>
                             <span class="chat-message-time">${time}</span>
                         </div>
                         <div class="chat-message-content">${escapeHtml(msg.content)}</div>
@@ -1341,6 +1468,23 @@
                     </div>
                 `;
             }).join('');
+            
+            // Re-add the scroll button at the end
+            container.innerHTML = messagesHtml + `
+                <button class="scroll-to-bottom ${!autoScrollEnabled ? 'visible' : ''}" id="scrollToBottomBtn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                    New messages
+                </button>
+            `;
+            
+            // Re-attach scroll button listener
+            document.getElementById('scrollToBottomBtn').addEventListener('click', () => {
+                autoScrollEnabled = true;
+                scrollToBottom();
+                document.getElementById('scrollToBottomBtn').classList.remove('visible');
+            });
         }
         
         function scrollToBottom() {
@@ -1438,7 +1582,7 @@
         async function banUser(userId) {
             if (!isModerator) return;
             
-            if (!confirm('Are you sure you want to ban this user? This will also block their device.')) return;
+            if (!confirm('Are you sure you want to ban this user? This will also block their device and delete all their messages.')) return;
             
             try {
                 // Get user's fingerprint
@@ -1467,6 +1611,17 @@
                             onConflict: 'fingerprint' 
                         });
                 }
+                
+                // Delete all messages from this user (hard delete)
+                await supabaseClient
+                    .from('chat_messages')
+                    .delete()
+                    .eq('user_id', userId)
+                    .eq('event_id', eventId);
+                
+                // Remove messages from local state immediately
+                chatMessages = chatMessages.filter(m => m.user_id !== userId);
+                renderChatMessages();
                 
                 // Add system message
                 await supabaseClient
@@ -1597,7 +1752,7 @@
             const timeoutsList = document.getElementById('timeoutsList');
             if (timedOutUsers && timedOutUsers.length > 0) {
                 timeoutsList.innerHTML = timedOutUsers.map(u => {
-                    const remaining = Math.ceil((new Date(u.timeout_until).getTime() - Date.now()) / 1000 / 60);
+                    const remaining = Math.ceil((new Date(u.timeout_until) - Date.now()) / 60000);
                     return `
                         <div class="banned-user-item">
                             <span>${escapeHtml(u.username)} (${remaining}m remaining)</span>
