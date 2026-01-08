@@ -903,17 +903,23 @@
         // CHAT SYSTEM
         // =============================================
         async function initChat() {
+            console.log('initChat started');
+            
             // Generate browser fingerprint
             const fingerprint = await generateFingerprint();
+            console.log('Fingerprint generated:', fingerprint.substring(0, 16) + '...');
             
             // Check if this fingerprint is banned
-            const { data: bannedFingerprint } = await supabaseClient
+            const { data: bannedFingerprint, error: fpError } = await supabaseClient
                 .from('banned_fingerprints')
                 .select('id')
                 .eq('fingerprint', fingerprint)
                 .single();
             
+            console.log('Fingerprint ban check:', { bannedFingerprint, fpError });
+            
             if (bannedFingerprint) {
+                console.log('Banned by fingerprint - showing banned state');
                 showBannedState();
                 await loadChatMessages();
                 subscribeToChatMessagesReadOnly();
@@ -922,10 +928,13 @@
             
             // Check for saved username in cookie
             const savedUser = getChatCookie();
+            console.log('Saved user from cookie:', savedUser);
             
             if (savedUser) {
                 // Verify the user still exists and isn't banned
                 const userStatus = await checkUserStatus(savedUser.id);
+                console.log('User status from DB:', userStatus);
+                
                 if (userStatus && !userStatus.is_banned) {
                     chatUser = userStatus;
                     chatUser.fingerprint = fingerprint; // Store for later use
@@ -944,6 +953,7 @@
                     subscribeToChatMessages();
                     return;
                 } else if (userStatus && userStatus.is_banned) {
+                    console.log('User is banned - showing banned state');
                     chatUser = userStatus; // Keep reference for potential realtime updates
                     showBannedState();
                     await loadChatMessages();
@@ -956,6 +966,7 @@
             window.currentFingerprint = fingerprint;
             
             // Show username setup
+            console.log('No valid user found - showing username setup');
             setupUsernameForm();
         }
         
