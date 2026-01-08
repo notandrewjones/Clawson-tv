@@ -1,0 +1,12 @@
+{
+  "name": "clawson-tv-chat",
+  "version": "1.0.0",
+  "description": "Livestream chat for Clawson.TV",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "npx serve public"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
