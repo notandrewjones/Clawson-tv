@@ -785,13 +785,18 @@
         // INITIALIZE
         // =============================================
         async function init() {
+            console.log('init() started');
+            
             // Initialize Supabase client
             supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            console.log('Supabase client created');
             
             // Load event configuration (gets most recent event)
             await loadEventConfig();
+            console.log('Event config loaded:', eventConfig);
             
             if (!eventConfig) {
+                console.log('No event config - stopping init');
                 document.getElementById('debugEventId').textContent = 'No events found';
                 return;
             }
@@ -811,6 +816,7 @@
             }
             
             // Initialize chat
+            console.log('About to call initChat()');
             initChat();
         }
         
