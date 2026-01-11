@@ -391,6 +391,139 @@
         }
         
         /* =============================================
+           USERNAME CHANGE MODAL
+           ============================================= */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-overlay.visible {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+            max-width: 350px;
+            width: 90%;
+            box-shadow: 0 16px 48px var(--shadow-color);
+            animation: modalSlideIn 0.2s ease;
+        }
+        
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .modal-content h3 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            text-align: center;
+        }
+        
+        .modal-content p {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+        
+        .modal-content input {
+            width: 100%;
+            background: var(--bg-input);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: var(--text-primary);
+            font-family: 'Roboto', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            margin-bottom: 12px;
+            text-align: center;
+            transition: border-color 0.2s;
+        }
+        
+        .modal-content input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        .modal-error {
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500;
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+            text-align: center;
+            min-height: 20px;
+        }
+        
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .modal-buttons button {
+            flex: 1;
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .modal-btn-cancel {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+        }
+        
+        .modal-btn-cancel:hover {
+            background: var(--border-color);
+        }
+        
+        .modal-btn-confirm {
+            background: var(--accent);
+            border: none;
+            color: #fff;
+        }
+        
+        .modal-btn-confirm:hover {
+            background: var(--accent-hover);
+        }
+        
+        .modal-btn-confirm:disabled {
+            background: var(--bg-tertiary);
+            color: var(--text-muted);
+            cursor: not-allowed;
+        }
+        
+        /* =============================================
            CHAT MESSAGES
            ============================================= */
         .chat-message {
@@ -1490,7 +1623,7 @@
                     <a href="https://clawson.churchcenter.com/calendar?view=month">Calendar</a>
                     <a href="https://www.clawson.tv/outreach">Outreach</a>
                     <a href="https://www.clawson.tv/info">Info Center</a>
-                    <a href="https://www.clawson.tv/info#contact-us">Contact Us</a>
+                    <a href="https://www.clawson.tv/info">Contact Us</a>
                 </div>
             </div>
         </nav>
@@ -1507,6 +1640,20 @@
     
     <!-- Chat Overlay (visible when chat is open on tablet) -->
     <div class="chat-overlay" id="chatOverlay"></div>
+    
+    <!-- Username Change Modal -->
+    <div class="modal-overlay" id="usernameModal">
+        <div class="modal-content">
+            <h3>Change Display Name</h3>
+            <p>Enter your new display name</p>
+            <input type="text" id="modalUsernameInput" placeholder="New name" maxlength="20" autocomplete="off">
+            <div class="modal-error" id="modalError"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn-cancel" id="modalCancel">Cancel</button>
+                <button class="modal-btn-confirm" id="modalConfirm">Save</button>
+            </div>
+        </div>
+    </div>
     
     <div class="container">
         <div class="main-content">
@@ -1676,7 +1823,7 @@
             </div>
             <div class="footer-column">
                 <h3>Grow</h3>
-                <a href="https://clawson.tv/connectcard">Connect Card</a>
+                <a href="https://clawson.churchcenter.com/people/forms/409083">Connect Card</a>
                 <a href="https://www.clawson.tv/nextsteps">Baptism</a>
                 <a href="https://www.clawson.tv/crews">Clawson Crews</a>
                 <a href="https://www.clawson.tv/devotions">Devotions</a>
@@ -2686,43 +2833,109 @@
         }
         
         async function promptUsernameChange() {
-            const newName = prompt('Enter new display name:', chatUser.username);
-            if (!newName || newName.trim() === chatUser.username) return;
+            const modal = document.getElementById('usernameModal');
+            const input = document.getElementById('modalUsernameInput');
+            const error = document.getElementById('modalError');
+            const confirmBtn = document.getElementById('modalConfirm');
+            const cancelBtn = document.getElementById('modalCancel');
             
-            const trimmed = newName.trim();
-            if (trimmed.length < 2 || trimmed.length > 20) {
-                alert('Name must be 2-20 characters');
-                return;
-            }
+            // Set current username as placeholder/value
+            input.value = chatUser.username;
+            error.textContent = '';
             
-            // Validate username characters and patterns
-            const validation = isValidUsername(trimmed);
-            if (!validation.valid) {
-                alert(validation.reason);
-                return;
-            }
+            // Show modal
+            modal.classList.add('visible');
+            input.focus();
+            input.select();
             
-            if (containsBadWords(trimmed)) {
-                alert('Please choose a different name');
-                return;
-            }
-            
-            try {
-                const { data } = await supabaseClient
-                    .from('chat_users')
-                    .update({ username: trimmed })
-                    .eq('id', chatUser.id)
-                    .select()
-                    .single();
+            // Handle confirm
+            const handleConfirm = async () => {
+                const newName = input.value.trim();
                 
-                if (data) {
-                    chatUser = data;
-                    setChatCookie(data);
-                    document.getElementById('currentUsername').textContent = data.username;
+                if (!newName || newName === chatUser.username) {
+                    closeModal();
+                    return;
                 }
-            } catch (err) {
-                console.error('Error updating username:', err);
-            }
+                
+                if (newName.length < 2 || newName.length > 20) {
+                    error.textContent = 'Name must be 2-20 characters';
+                    return;
+                }
+                
+                // Validate username characters and patterns
+                const validation = isValidUsername(newName);
+                if (!validation.valid) {
+                    error.textContent = validation.reason;
+                    return;
+                }
+                
+                if (containsBadWords(newName)) {
+                    error.textContent = 'Please choose a different name';
+                    return;
+                }
+                
+                confirmBtn.disabled = true;
+                confirmBtn.textContent = 'Saving...';
+                
+                try {
+                    const { data } = await supabaseClient
+                        .from('chat_users')
+                        .update({ username: newName })
+                        .eq('id', chatUser.id)
+                        .select()
+                        .single();
+                    
+                    if (data) {
+                        chatUser = data;
+                        setChatCookie(data);
+                        document.getElementById('currentUsername').textContent = data.username;
+                    }
+                    closeModal();
+                } catch (err) {
+                    console.error('Error updating username:', err);
+                    error.textContent = 'Failed to update name. Try again.';
+                } finally {
+                    confirmBtn.disabled = false;
+                    confirmBtn.textContent = 'Save';
+                }
+            };
+            
+            // Handle cancel/close
+            const closeModal = () => {
+                modal.classList.remove('visible');
+                cleanup();
+            };
+            
+            // Handle Enter key
+            const handleKeydown = (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    handleConfirm();
+                } else if (e.key === 'Escape') {
+                    closeModal();
+                }
+            };
+            
+            // Handle click outside modal
+            const handleOverlayClick = (e) => {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            };
+            
+            // Cleanup event listeners
+            const cleanup = () => {
+                confirmBtn.removeEventListener('click', handleConfirm);
+                cancelBtn.removeEventListener('click', closeModal);
+                input.removeEventListener('keydown', handleKeydown);
+                modal.removeEventListener('click', handleOverlayClick);
+            };
+            
+            // Add event listeners
+            confirmBtn.addEventListener('click', handleConfirm);
+            cancelBtn.addEventListener('click', closeModal);
+            input.addEventListener('keydown', handleKeydown);
+            modal.addEventListener('click', handleOverlayClick);
         }
         
         // =============================================
