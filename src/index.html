@@ -87,10 +87,9 @@
         }
         
         .container {
-            /* Fixed "ideal" size - will be scaled to fit viewport */
-            width: 1400px;
+            /* Size will be calculated by JavaScript to fit viewport */
             padding: 16px;
-            /* Zoom will be set by JavaScript */
+            box-sizing: border-box;
         }
         
         /* =============================================
@@ -704,7 +703,7 @@
             
             .container {
                 width: 100% !important;
-                zoom: 1 !important;
+                margin: 0 !important;
                 padding: 12px;
             }
             
@@ -826,7 +825,7 @@
             
             .container {
                 width: 100% !important;
-                zoom: 1 !important;
+                margin: 0 !important;
                 padding: 6px;
                 height: 100vh;
                 height: 100dvh;
@@ -2867,73 +2866,97 @@
         }
         
         // =============================================
-        // UNIFORM SCALING (Desktop)
+        // RESPONSIVE SIZING (Desktop)
         // =============================================
         function initChatHeightSync() {
             const container = document.querySelector('.container');
             const videoColumn = document.querySelector('.video-column');
             const chatColumn = document.getElementById('chatColumn');
+            const mainContent = document.querySelector('.main-content');
             
             if (!container || !videoColumn || !chatColumn) return;
             
-            function scaleToFit() {
-                // Only apply scaling on desktop (when chat toggle button is hidden)
+            function adjustLayout() {
+                // Only apply on desktop (when chat toggle button is hidden)
                 const chatToggleBtn = document.getElementById('chatToggleBtn');
                 if (chatToggleBtn && window.getComputedStyle(chatToggleBtn).display !== 'none') {
-                    // Tablet/mobile - remove scaling
-                    container.style.zoom = '';
+                    // Tablet/mobile - reset to CSS defaults
                     container.style.width = '';
+                    container.style.padding = '';
+                    if (mainContent) mainContent.style.gridTemplateColumns = '';
                     chatColumn.style.height = '';
                     chatColumn.style.maxHeight = '';
                     document.body.style.overflow = '';
                     return;
                 }
                 
-                // Desktop - apply uniform scaling using zoom (not transform)
-                // Reset zoom to measure natural size
-                container.style.zoom = '1';
-                container.style.width = '1400px';
-                
-                // Sync chat height to video column first
-                const videoColumnHeight = videoColumn.offsetHeight;
-                if (videoColumnHeight > 0) {
-                    chatColumn.style.height = videoColumnHeight + 'px';
-                    chatColumn.style.maxHeight = videoColumnHeight + 'px';
-                }
-                
-                // Get container's natural dimensions
-                const containerWidth = container.offsetWidth;
-                const containerHeight = container.offsetHeight;
-                
-                // Get viewport dimensions
+                // Desktop - calculate sizes to fit viewport
                 const viewportWidth = window.innerWidth;
                 const viewportHeight = window.innerHeight;
                 
-                // Calculate scale to fit both dimensions
-                const scaleX = viewportWidth / containerWidth;
-                const scaleY = viewportHeight / containerHeight;
+                // Our ideal aspect ratio is based on 1400px wide layout
+                // Video is 16:9, chat is 380px, gap is 16px, padding is 32px total
+                // So video area is roughly 1400 - 380 - 16 - 32 = 972px wide
+                // At 16:9, video height = 972 * 9/16 = 547px
+                // Banner adds ~70px, so total height ~617px + 32px padding = ~649px
+                // Aspect ratio of ideal layout: 1400 / 649 ≈ 2.16
+                
+                const idealWidth = 1400;
+                const idealChatWidth = 380;
+                const idealGap = 16;
+                const idealPadding = 16;
+                const chatRatio = idealChatWidth / idealWidth; // ~0.271
+                
+                // Calculate the scale factor
+                const videoAreaWidth = idealWidth - idealChatWidth - idealGap - (idealPadding * 2);
+                const videoHeight = videoAreaWidth * 9 / 16;
+                const bannerHeight = 70; // approximate
+                const idealHeight = videoHeight + bannerHeight + idealGap + (idealPadding * 2);
+                
+                const scaleX = viewportWidth / idealWidth;
+                const scaleY = viewportHeight / idealHeight;
                 const scale = Math.min(scaleX, scaleY);
                 
-                // Apply uniform zoom (this preserves click coordinates properly)
-                container.style.zoom = scale;
+                // Apply scaled dimensions directly (no transform/zoom)
+                const newWidth = idealWidth * scale;
+                const newPadding = idealPadding * scale;
+                const newGap = idealGap * scale;
+                const newChatWidth = idealChatWidth * scale;
+                
+                container.style.width = newWidth + 'px';
+                container.style.padding = newPadding + 'px';
+                container.style.margin = '0 auto';
+                
+                if (mainContent) {
+                    mainContent.style.gridTemplateColumns = `1fr ${newChatWidth}px`;
+                    mainContent.style.gap = newGap + 'px';
+                }
+                
+                // Sync chat height to video column
+                requestAnimationFrame(() => {
+                    const videoColumnHeight = videoColumn.offsetHeight;
+                    if (videoColumnHeight > 0) {
+                        chatColumn.style.height = videoColumnHeight + 'px';
+                        chatColumn.style.maxHeight = videoColumnHeight + 'px';
+                    }
+                });
                 
                 // Prevent scrollbars
                 document.body.style.overflow = 'hidden';
             }
             
-            // Initial scale
-            // Use requestAnimationFrame to ensure layout is complete
+            // Initial adjustment
             requestAnimationFrame(() => {
-                scaleToFit();
+                adjustLayout();
             });
             
-            // Re-scale on window resize
-            window.addEventListener('resize', scaleToFit);
+            // Re-adjust on window resize
+            window.addEventListener('resize', adjustLayout);
             
-            // Re-scale when content changes (e.g., banner text updates)
+            // Re-adjust when content changes
             if (typeof ResizeObserver !== 'undefined') {
                 const resizeObserver = new ResizeObserver(() => {
-                    scaleToFit();
+                    adjustLayout();
                 });
                 resizeObserver.observe(videoColumn);
             }
