@@ -90,8 +90,7 @@
             /* Fixed "ideal" size - will be scaled to fit viewport */
             width: 1400px;
             padding: 16px;
-            transform-origin: top left;
-            /* Scale will be set by JavaScript */
+            /* Zoom will be set by JavaScript */
         }
         
         /* =============================================
@@ -705,7 +704,7 @@
             
             .container {
                 width: 100% !important;
-                transform: none !important;
+                zoom: 1 !important;
                 padding: 12px;
             }
             
@@ -827,7 +826,7 @@
             
             .container {
                 width: 100% !important;
-                transform: none !important;
+                zoom: 1 !important;
                 padding: 6px;
                 height: 100vh;
                 height: 100dvh;
@@ -2882,7 +2881,7 @@
                 const chatToggleBtn = document.getElementById('chatToggleBtn');
                 if (chatToggleBtn && window.getComputedStyle(chatToggleBtn).display !== 'none') {
                     // Tablet/mobile - remove scaling
-                    container.style.transform = '';
+                    container.style.zoom = '';
                     container.style.width = '';
                     chatColumn.style.height = '';
                     chatColumn.style.maxHeight = '';
@@ -2890,9 +2889,9 @@
                     return;
                 }
                 
-                // Desktop - apply uniform scaling
-                // Reset transform to measure natural size
-                container.style.transform = 'none';
+                // Desktop - apply uniform scaling using zoom (not transform)
+                // Reset zoom to measure natural size
+                container.style.zoom = '1';
                 container.style.width = '1400px';
                 
                 // Sync chat height to video column first
@@ -2915,9 +2914,8 @@
                 const scaleY = viewportHeight / containerHeight;
                 const scale = Math.min(scaleX, scaleY);
                 
-                // Apply uniform scale
-                container.style.transform = `scale(${scale})`;
-                container.style.transformOrigin = 'top left';
+                // Apply uniform zoom (this preserves click coordinates properly)
+                container.style.zoom = scale;
                 
                 // Prevent scrollbars
                 document.body.style.overflow = 'hidden';
