@@ -67,9 +67,8 @@
             box-sizing: border-box;
         }
         
-        html, body {
+        html {
             height: 100%;
-            overflow: hidden; /* Prevent scrollbars during scaling */
         }
         
         body {
@@ -78,6 +77,8 @@
             background: var(--bg-primary);
             color: var(--text-primary);
             min-height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
         }
         
         /* Title/Heading font */
@@ -90,6 +91,8 @@
             /* Size will be calculated by JavaScript to fit viewport */
             padding: 16px;
             box-sizing: border-box;
+            max-width: 1600px;
+            margin: 0 auto;
         }
         
         /* =============================================
@@ -840,36 +843,23 @@
             }
         }
         
-        /* Mobile phones - stacked layout fitting viewport */
+        /* Mobile phones - stacked layout */
         @media (max-width: 600px) {
-            html, body {
-                height: 100%;
-                overflow-x: hidden;
-                overflow-y: auto;
-            }
-            
             .container {
                 width: 100% !important;
                 margin: 0 !important;
-                padding: 6px;
-                height: 100vh;
-                height: 100dvh;
-                display: flex;
-                flex-direction: column;
+                padding: 8px;
             }
             
             .main-content {
                 grid-template-columns: 1fr;
-                gap: 6px;
-                flex: 1;
-                min-height: 0;
+                gap: 8px;
                 display: flex;
                 flex-direction: column;
             }
             
             .video-column {
-                gap: 6px;
-                flex: 0 0 auto;
+                gap: 8px;
             }
             
             .video-container {
@@ -883,7 +873,6 @@
                 gap: 10px;
                 padding: 10px 12px;
                 border-radius: 8px;
-                flex: 0 0 auto;
                 align-items: center;
             }
             
@@ -912,8 +901,8 @@
             
             /* Chat inline on mobile */
             .chat-column {
-                flex: 1;
-                min-height: 180px;
+                min-height: 300px;
+                max-height: 400px;
                 border-radius: 8px;
                 position: relative !important;
                 right: auto !important;
@@ -1221,9 +1210,290 @@
             cursor: pointer;
             margin-left: 8px;
         }
+        
+        /* =============================================
+           SITE HEADER
+           ============================================= */
+        .site-header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .site-logo {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+        
+        .site-nav {
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+        
+        .site-nav a {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--accent);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        
+        .site-nav a:hover {
+            color: var(--accent-hover);
+        }
+        
+        .site-nav a.active {
+            color: var(--text-primary);
+        }
+        
+        /* Menu dropdown */
+        .nav-dropdown {
+            position: relative;
+        }
+        
+        .nav-dropdown-toggle {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--accent);
+            background: none;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 0;
+        }
+        
+        .nav-dropdown-toggle:hover {
+            color: var(--accent-hover);
+        }
+        
+        .nav-dropdown-toggle svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+        
+        .nav-dropdown.open .nav-dropdown-toggle svg {
+            transform: rotate(180deg);
+        }
+        
+        .nav-dropdown-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 8px 0;
+            min-width: 160px;
+            box-shadow: 0 8px 24px var(--shadow-color);
+            display: none;
+            z-index: 200;
+        }
+        
+        .nav-dropdown.open .nav-dropdown-menu {
+            display: block;
+        }
+        
+        .nav-dropdown-menu a {
+            display: block;
+            padding: 10px 16px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        
+        .nav-dropdown-menu a:hover {
+            background: var(--bg-tertiary);
+            color: var(--accent);
+        }
+        
+        /* Mobile header */
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 8px;
+        }
+        
+        .mobile-menu-btn svg {
+            width: 24px;
+            height: 24px;
+        }
+        
+        /* =============================================
+           SITE FOOTER
+           ============================================= */
+        .site-footer {
+            background: var(--bg-tertiary);
+            border-top: 1px solid var(--border-color);
+            padding: 48px 24px 24px;
+            margin-top: 32px;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 48px;
+        }
+        
+        .footer-column h3 {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 800;
+            font-size: 1.1rem;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+        
+        .footer-column a {
+            display: block;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500;
+            font-size: 0.9rem;
+            color: var(--accent);
+            text-decoration: none;
+            margin-bottom: 8px;
+            transition: color 0.2s;
+        }
+        
+        .footer-column a:hover {
+            color: var(--accent-hover);
+            text-decoration: underline;
+        }
+        
+        .footer-bottom {
+            max-width: 1200px;
+            margin: 32px auto 0;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            font-family: 'Roboto', sans-serif;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        /* Header/Footer responsive */
+        @media (max-width: 900px) {
+            .site-nav {
+                display: none;
+            }
+            
+            .site-nav.mobile-open {
+                display: flex;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background: var(--bg-secondary);
+                border-bottom: 1px solid var(--border-color);
+                padding: 16px 24px;
+                gap: 16px;
+                align-items: flex-start;
+            }
+            
+            .mobile-menu-btn {
+                display: block;
+            }
+            
+            .nav-dropdown-menu {
+                position: static;
+                box-shadow: none;
+                border: none;
+                margin-top: 8px;
+                padding-left: 16px;
+            }
+            
+            .footer-content {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 32px;
+            }
+        }
+        
+        @media (max-width: 600px) {
+            .site-header {
+                padding: 12px 16px;
+            }
+            
+            .site-logo {
+                font-size: 1.25rem;
+            }
+            
+            .site-footer {
+                padding: 32px 16px 16px;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                gap: 24px;
+            }
+            
+            .footer-column h3 {
+                font-size: 1rem;
+            }
+            
+            .footer-column a {
+                font-size: 0.85rem;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Site Header -->
+    <header class="site-header">
+        <a href="https://www.clawson.tv" class="site-logo">Clawson.TV</a>
+        
+        <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="3" y1="12" x2="21" y2="12"></line>
+                <line x1="3" y1="6" x2="21" y2="6"></line>
+                <line x1="3" y1="18" x2="21" y2="18"></line>
+            </svg>
+        </button>
+        
+        <nav class="site-nav" id="siteNav">
+            <a href="https://www.clawson.tv">Home</a>
+            <a href="https://live.clawson.tv" class="active">Live</a>
+            <a href="https://www.clawson.tv/worship">Worship</a>
+            <a href="https://www.clawson.tv/sermons">Sermons</a>
+            
+            <div class="nav-dropdown" id="navDropdown">
+                <button class="nav-dropdown-toggle" id="dropdownToggle">
+                    Menu
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                </button>
+                <div class="nav-dropdown-menu">
+                    <a href="https://www.clawson.tv/give">Give</a>
+                    <a href="https://www.clawson.tv/next-steps">Next Steps</a>
+                    <a href="https://www.clawson.tv/crews">Crews</a>
+                    <a href="https://www.clawson.tv/calendar">Calendar</a>
+                    <a href="https://www.clawson.tv/outreach">Outreach</a>
+                    <a href="https://www.clawson.tv/info-center">Info Center</a>
+                    <a href="https://www.clawson.tv/contact-us">Contact Us</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+    
     <!-- Chat Toggle Button (visible on tablet) -->
     <button class="chat-toggle-btn" id="chatToggleBtn">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1392,6 +1662,42 @@
             </div>
         </div>
     </div>
+    
+    <!-- Site Footer -->
+    <footer class="site-footer">
+        <div class="footer-content">
+            <div class="footer-column">
+                <h3>Media</h3>
+                <a href="https://live.clawson.tv">Live Broadcast</a>
+                <a href="https://www.clawson.tv/worship">Worship</a>
+                <a href="https://www.clawson.tv/sermons">Sermons</a>
+            </div>
+            <div class="footer-column">
+                <h3>Grow</h3>
+                <a href="https://www.clawson.tv/connect-card">Connect Card</a>
+                <a href="https://www.clawson.tv/baptism">Baptism</a>
+                <a href="https://www.clawson.tv/crews">Clawson Crews</a>
+                <a href="https://www.clawson.tv/devotions">Devotions</a>
+            </div>
+            <div class="footer-column">
+                <h3>Ministries</h3>
+                <a href="https://www.clawson.tv/kids">Kids</a>
+                <a href="https://www.clawson.tv/early-childhood">Early Childhood</a>
+                <a href="https://www.clawson.tv/youth">Youth</a>
+                <a href="https://www.clawson.tv/outreach">Outreach</a>
+            </div>
+            <div class="footer-column">
+                <h3>About Us</h3>
+                <a href="https://www.clawson.tv/info-center">Info Center</a>
+                <a href="https://www.clawson.tv/privacy-policy">Privacy Policy</a>
+                <a href="https://www.clawson.tv/contact-us">Contact Us</a>
+                <a href="https://www.clawson.tv/beliefs">Beliefs</a>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            &copy; 2026 Clawson Baptist Church. All rights reserved.
+        </div>
+    </footer>
     
     <!-- Resi Player Scripts -->
     <script defer type="text/javascript" src="https://control.resi.io/webplayer/page.min.js"></script>
@@ -2966,62 +3272,16 @@
             if (!container || !videoColumn || !chatColumn) return;
             
             function adjustLayout() {
-                // Only apply on desktop (when chat toggle button is hidden)
+                // Only sync chat height on desktop (when chat toggle button is hidden)
                 const chatToggleBtn = document.getElementById('chatToggleBtn');
                 if (chatToggleBtn && window.getComputedStyle(chatToggleBtn).display !== 'none') {
                     // Tablet/mobile - reset to CSS defaults
-                    container.style.width = '';
-                    container.style.padding = '';
-                    if (mainContent) mainContent.style.gridTemplateColumns = '';
                     chatColumn.style.height = '';
                     chatColumn.style.maxHeight = '';
-                    document.body.style.overflow = '';
                     return;
                 }
                 
-                // Desktop - calculate sizes to fit viewport
-                const viewportWidth = window.innerWidth;
-                const viewportHeight = window.innerHeight;
-                
-                // Our ideal aspect ratio is based on 1400px wide layout
-                // Video is 16:9, chat is 380px, gap is 16px, padding is 32px total
-                // So video area is roughly 1400 - 380 - 16 - 32 = 972px wide
-                // At 16:9, video height = 972 * 9/16 = 547px
-                // Banner adds ~70px, so total height ~617px + 32px padding = ~649px
-                // Aspect ratio of ideal layout: 1400 / 649 ≈ 2.16
-                
-                const idealWidth = 1400;
-                const idealChatWidth = 380;
-                const idealGap = 16;
-                const idealPadding = 16;
-                const chatRatio = idealChatWidth / idealWidth; // ~0.271
-                
-                // Calculate the scale factor
-                const videoAreaWidth = idealWidth - idealChatWidth - idealGap - (idealPadding * 2);
-                const videoHeight = videoAreaWidth * 9 / 16;
-                const bannerHeight = 70; // approximate
-                const idealHeight = videoHeight + bannerHeight + idealGap + (idealPadding * 2);
-                
-                const scaleX = viewportWidth / idealWidth;
-                const scaleY = viewportHeight / idealHeight;
-                const scale = Math.min(scaleX, scaleY);
-                
-                // Apply scaled dimensions directly (no transform/zoom)
-                const newWidth = idealWidth * scale;
-                const newPadding = idealPadding * scale;
-                const newGap = idealGap * scale;
-                const newChatWidth = idealChatWidth * scale;
-                
-                container.style.width = newWidth + 'px';
-                container.style.padding = newPadding + 'px';
-                container.style.margin = '0 auto';
-                
-                if (mainContent) {
-                    mainContent.style.gridTemplateColumns = `1fr ${newChatWidth}px`;
-                    mainContent.style.gap = newGap + 'px';
-                }
-                
-                // Sync chat height to video column
+                // Desktop - sync chat height to video column
                 requestAnimationFrame(() => {
                     const videoColumnHeight = videoColumn.offsetHeight;
                     if (videoColumnHeight > 0) {
@@ -3029,9 +3289,6 @@
                         chatColumn.style.maxHeight = videoColumnHeight + 'px';
                     }
                 });
-                
-                // Prevent scrollbars
-                document.body.style.overflow = 'hidden';
             }
             
             // Initial adjustment
@@ -3055,6 +3312,47 @@
         // START
         // =============================================
         document.addEventListener('DOMContentLoaded', init);
+        
+        // =============================================
+        // HEADER NAVIGATION
+        // =============================================
+        (function() {
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const siteNav = document.getElementById('siteNav');
+            
+            if (mobileMenuBtn && siteNav) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    siteNav.classList.toggle('mobile-open');
+                });
+            }
+            
+            // Dropdown toggle
+            const navDropdown = document.getElementById('navDropdown');
+            const dropdownToggle = document.getElementById('dropdownToggle');
+            
+            if (navDropdown && dropdownToggle) {
+                dropdownToggle.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    navDropdown.classList.toggle('open');
+                });
+                
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!navDropdown.contains(e.target)) {
+                        navDropdown.classList.remove('open');
+                    }
+                });
+            }
+            
+            // Close mobile menu when clicking a link
+            const navLinks = siteNav?.querySelectorAll('a');
+            navLinks?.forEach(link => {
+                link.addEventListener('click', () => {
+                    siteNav.classList.remove('mobile-open');
+                });
+            });
+        })();
     </script>
 </body>
 </html>
