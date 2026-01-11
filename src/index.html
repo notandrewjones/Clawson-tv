@@ -69,6 +69,7 @@
         
         html, body {
             height: 100%;
+            overflow: hidden; /* Prevent scrollbars during scaling */
         }
         
         body {
@@ -86,46 +87,37 @@
         }
         
         .container {
-            /* No max-width - scale until height is the constraint */
-            height: 100vh;
-            height: 100dvh;
-            padding: clamp(8px, 1vh, 16px);
-            display: flex;
-            flex-direction: column;
-            box-sizing: border-box;
+            /* Fixed "ideal" size - will be scaled to fit viewport */
+            width: 1400px;
+            padding: 16px;
+            transform-origin: top left;
+            /* Scale will be set by JavaScript */
         }
         
         /* =============================================
-           MAIN LAYOUT - Height-constrained scaling
+           MAIN LAYOUT - Fixed proportions, scaled to fit
            ============================================= */
         .main-content {
             display: grid;
-            /* Chat width as percentage of viewport */
-            grid-template-columns: 1fr minmax(250px, 22vw);
-            gap: clamp(8px, 1vh, 16px);
+            grid-template-columns: 1fr 380px;
+            gap: 16px;
             align-items: start;
-            flex: 1;
-            min-height: 0;
         }
         
         /* Left column: Video + Banner */
         .video-column {
             display: flex;
             flex-direction: column;
-            gap: clamp(8px, 1vh, 16px);
-            min-width: 0; /* Prevents grid blowout */
-            height: 100%;
+            gap: 16px;
+            min-width: 0;
         }
         
         .video-container {
             aspect-ratio: 16/9;
             background: #000;
-            border-radius: clamp(6px, 0.6vh, 12px);
+            border-radius: 12px;
             overflow: hidden;
             box-shadow: 0 10px 40px var(--shadow-color);
-            /* Let video grow but respect container height */
-            flex: 1 1 auto;
-            min-height: 0;
         }
         
         .video-container > div {
@@ -136,13 +128,13 @@
         /* Banner below video */
         .content-banner {
             background: var(--bg-secondary);
-            border-radius: clamp(6px, 0.6vh, 12px);
-            padding: clamp(10px, 1.2vh, 16px) clamp(12px, 1.5vh, 20px);
+            border-radius: 12px;
+            padding: 16px 20px;
             display: flex;
             align-items: center;
-            gap: clamp(8px, 1vh, 16px);
+            gap: 16px;
             border: 1px solid var(--border-color);
-            flex: 0 0 auto; /* Don't grow - natural height only */
+            flex: 0 0 auto;
             min-height: 0;
         }
         
@@ -163,9 +155,9 @@
         
         .content-banner h2 {
             font-family: 'Poppins', sans-serif;
-            font-size: clamp(0.85rem, 1.8vh, 1.2rem);
+            font-size: 1.1rem;
             font-weight: 800;
-            margin-bottom: clamp(2px, 0.4vh, 4px);
+            margin-bottom: 4px;
             color: var(--accent);
         }
         
@@ -174,19 +166,19 @@
             font-weight: 500;
             color: var(--text-muted);
             line-height: 1.4;
-            font-size: clamp(0.75rem, 1.5vh, 1rem);
+            font-size: 0.9rem;
         }
         
         .content-banner .cta-button {
             display: inline-block;
             background: var(--accent);
             color: #fff;
-            padding: clamp(6px, 1vh, 12px) clamp(12px, 2vh, 24px);
-            border-radius: clamp(4px, 0.8vh, 8px);
+            padding: 10px 20px;
+            border-radius: 8px;
             text-decoration: none;
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
-            font-size: clamp(0.75rem, 1.5vh, 1rem);
+            font-size: 0.95rem;
             text-align: center;
             transition: background 0.2s, transform 0.2s;
             white-space: nowrap;
@@ -205,37 +197,36 @@
             display: flex;
             flex-direction: column;
             background: var(--bg-secondary);
-            border-radius: clamp(6px, 0.8vh, 12px);
+            border-radius: 12px;
             overflow: hidden;
             border: 1px solid var(--border-color);
             /* Height will be set by JS to match video column */
-            height: fit-content;
         }
         
         .chat-header {
-            padding: clamp(8px, 1.2vh, 14px) clamp(10px, 1.5vh, 18px);
+            padding: 12px 16px;
             border-bottom: 1px solid var(--border-color);
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
-            font-size: clamp(0.8rem, 1.5vh, 1rem);
+            font-size: 1rem;
             color: var(--text-primary);
             display: flex;
             justify-content: space-between;
             align-items: center;
             flex-shrink: 0;
             flex-wrap: wrap;
-            gap: clamp(4px, 0.6vh, 8px);
+            gap: 8px;
         }
         
         .chat-header-left {
             display: flex;
             align-items: center;
-            gap: clamp(4px, 0.8vh, 8px);
+            gap: 8px;
         }
         
         .online-count {
             font-family: 'Roboto', sans-serif;
-            font-size: clamp(0.65rem, 1.2vh, 0.85rem);
+            font-size: 0.8rem;
             color: var(--text-muted);
             font-weight: 500;
         }
@@ -243,9 +234,9 @@
         .chat-user-info {
             display: flex;
             align-items: center;
-            gap: clamp(4px, 0.8vh, 8px);
+            gap: 8px;
             font-family: 'Roboto', sans-serif;
-            font-size: clamp(0.7rem, 1.3vh, 0.9rem);
+            font-size: 0.85rem;
             font-weight: 500;
             color: var(--text-muted);
         }
@@ -261,13 +252,13 @@
         
         .chat-messages {
             flex: 1;
-            padding: clamp(6px, 1vh, 12px);
+            padding: 12px;
             overflow-y: auto;
             display: flex;
             flex-direction: column;
-            gap: clamp(4px, 0.8vh, 8px);
+            gap: 8px;
             position: relative;
-            min-height: 0; /* Important for flex scrolling */
+            min-height: 0;
         }
         
         /* Scroll to bottom button */
@@ -280,14 +271,14 @@
             color: #fff;
             border: none;
             border-radius: 20px;
-            padding: clamp(4px, 0.8vh, 8px) clamp(10px, 1.5vh, 16px);
+            padding: 8px 16px;
             font-family: 'Poppins', sans-serif;
-            font-size: clamp(0.7rem, 1.2vh, 0.85rem);
+            font-size: 0.85rem;
             font-weight: 600;
             cursor: pointer;
             display: none;
             align-items: center;
-            gap: clamp(3px, 0.5vh, 6px);
+            gap: 6px;
             box-shadow: 0 4px 12px var(--shadow-color);
             z-index: 10;
             margin-top: auto;
@@ -303,8 +294,8 @@
         }
         
         .scroll-to-bottom svg {
-            width: clamp(10px, 1.5vh, 14px);
-            height: clamp(10px, 1.5vh, 14px);
+            width: 14px;
+            height: 14px;
         }
         
         .chat-placeholder {
@@ -314,14 +305,14 @@
             justify-content: center;
             color: var(--text-muted);
             text-align: center;
-            padding: clamp(16px, 3vh, 40px);
+            padding: 40px;
         }
         
         /* =============================================
            USERNAME SETUP
            ============================================= */
         .username-setup {
-            padding: clamp(12px, 2vh, 24px);
+            padding: 24px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -333,8 +324,8 @@
         .username-setup h3 {
             font-family: 'Poppins', sans-serif;
             font-weight: 800;
-            font-size: clamp(0.9rem, 2vh, 1.3rem);
-            margin-bottom: clamp(4px, 0.8vh, 8px);
+            font-size: 1.25rem;
+            margin-bottom: 8px;
             color: var(--text-primary);
         }
         
@@ -342,22 +333,22 @@
             font-family: 'Roboto', sans-serif;
             font-weight: 500;
             color: var(--text-muted);
-            font-size: clamp(0.75rem, 1.5vh, 1rem);
-            margin-bottom: clamp(10px, 2vh, 20px);
+            font-size: 0.95rem;
+            margin-bottom: 20px;
         }
         
         .username-setup input {
             width: 100%;
-            max-width: clamp(180px, 25vh, 280px);
+            max-width: 250px;
             background: var(--bg-input);
             border: 1px solid var(--border-color);
-            border-radius: clamp(4px, 0.8vh, 8px);
-            padding: clamp(8px, 1.2vh, 14px) clamp(10px, 1.5vh, 18px);
+            border-radius: 8px;
+            padding: 12px 16px;
             color: var(--text-primary);
             font-family: 'Roboto', sans-serif;
-            font-size: clamp(0.85rem, 1.5vh, 1.1rem);
+            font-size: 1rem;
             font-weight: 500;
-            margin-bottom: clamp(6px, 1vh, 12px);
+            margin-bottom: 12px;
             text-align: center;
             transition: border-color 0.2s, background 0.3s;
         }
@@ -371,10 +362,10 @@
             background: var(--accent);
             color: #fff;
             border: none;
-            border-radius: clamp(4px, 0.8vh, 8px);
-            padding: clamp(8px, 1.2vh, 14px) clamp(20px, 3vh, 36px);
+            border-radius: 8px;
+            padding: 12px 32px;
             font-family: 'Poppins', sans-serif;
-            font-size: clamp(0.8rem, 1.5vh, 1.1rem);
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
@@ -394,17 +385,17 @@
             font-family: 'Roboto', sans-serif;
             font-weight: 500;
             color: #ef4444;
-            font-size: clamp(0.7rem, 1.2vh, 0.9rem);
-            margin-top: clamp(4px, 0.8vh, 8px);
+            font-size: 0.85rem;
+            margin-top: 8px;
         }
         
         /* =============================================
            CHAT MESSAGES
            ============================================= */
         .chat-message {
-            padding: clamp(4px, 0.8vh, 10px) clamp(6px, 1vh, 12px);
+            padding: 8px 12px;
             background: var(--bg-tertiary);
-            border-radius: clamp(4px, 0.8vh, 8px);
+            border-radius: 8px;
             animation: fadeIn 0.2s ease;
             transition: background 0.3s ease;
         }
@@ -418,7 +409,7 @@
             background: var(--system-bg);
             text-align: center;
             font-family: 'Roboto', sans-serif;
-            font-size: clamp(0.7rem, 1.2vh, 0.9rem);
+            font-size: 0.85rem;
             font-weight: 500;
             color: var(--system-text);
         }
@@ -432,19 +423,19 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: clamp(1px, 0.4vh, 4px);
+            margin-bottom: 4px;
             flex-wrap: wrap;
-            gap: clamp(1px, 0.4vh, 4px);
+            gap: 4px;
         }
         
         .chat-message-author {
             font-family: 'Poppins', sans-serif;
             font-weight: 600;
             color: var(--accent);
-            font-size: clamp(0.75rem, 1.3vh, 0.95rem);
+            font-size: 0.9rem;
             display: flex;
             align-items: center;
-            gap: clamp(3px, 0.6vh, 6px);
+            gap: 6px;
         }
         
         .chat-message-author.moderator {
@@ -459,10 +450,10 @@
             background: linear-gradient(135deg, #f59e0b, #d97706);
             color: #000;
             font-family: 'Poppins', sans-serif;
-            font-size: clamp(0.5rem, 0.9vh, 0.7rem);
+            font-size: 0.65rem;
             font-weight: 700;
-            padding: clamp(1px, 0.2vh, 2px) clamp(3px, 0.6vh, 6px);
-            border-radius: clamp(2px, 0.4vh, 4px);
+            padding: 2px 6px;
+            border-radius: 4px;
             letter-spacing: 0.5px;
             text-transform: uppercase;
             box-shadow: 0 1px 3px rgba(0,0,0,0.3);
@@ -471,7 +462,7 @@
         
         .chat-message-time {
             font-family: 'Roboto', sans-serif;
-            font-size: clamp(0.6rem, 1vh, 0.8rem);
+            font-size: 0.75rem;
             font-weight: 500;
             color: var(--text-muted);
         }
@@ -479,7 +470,7 @@
         .chat-message-content {
             font-family: 'Roboto', sans-serif;
             font-weight: 500;
-            font-size: clamp(0.75rem, 1.3vh, 0.95rem);
+            font-size: 0.9rem;
             color: var(--text-secondary);
             line-height: 1.4;
             word-wrap: break-word;
@@ -487,8 +478,8 @@
         
         .chat-message-actions {
             display: none;
-            gap: clamp(3px, 0.6vh, 8px);
-            margin-top: clamp(3px, 0.5vh, 6px);
+            gap: 8px;
+            margin-top: 6px;
             flex-wrap: wrap;
         }
         
@@ -501,11 +492,11 @@
             border: none;
             color: var(--text-muted);
             font-family: 'Roboto', sans-serif;
-            font-size: clamp(0.6rem, 1vh, 0.8rem);
+            font-size: 0.75rem;
             font-weight: 500;
             cursor: pointer;
-            padding: clamp(1px, 0.2vh, 2px) clamp(3px, 0.6vh, 6px);
-            border-radius: clamp(2px, 0.4vh, 4px);
+            padding: 2px 6px;
+            border-radius: 4px;
             transition: background 0.2s, color 0.2s;
         }
         
@@ -528,14 +519,14 @@
            CHAT INPUT
            ============================================= */
         .chat-input-area {
-            padding: clamp(8px, 1.2vh, 16px);
+            padding: 16px;
             border-top: 1px solid var(--border-color);
             flex-shrink: 0;
         }
         
         .chat-input-wrapper {
             display: flex;
-            gap: clamp(6px, 1vh, 12px);
+            gap: 12px;
         }
         
         .chat-input {
@@ -543,11 +534,11 @@
             min-width: 0;
             background: var(--bg-input);
             border: 1px solid var(--border-color);
-            border-radius: clamp(4px, 0.8vh, 8px);
-            padding: clamp(6px, 1vh, 12px) clamp(8px, 1.2vh, 16px);
+            border-radius: 8px;
+            padding: 12px 16px;
             color: var(--text-primary);
             font-family: 'Roboto', sans-serif;
-            font-size: clamp(0.8rem, 1.4vh, 1rem);
+            font-size: 0.95rem;
             font-weight: 500;
             transition: border-color 0.2s, background 0.3s;
         }
@@ -565,10 +556,10 @@
             background: var(--accent);
             color: #fff;
             border: none;
-            border-radius: clamp(4px, 0.8vh, 8px);
-            padding: clamp(6px, 1vh, 12px) clamp(10px, 1.8vh, 20px);
+            border-radius: 8px;
+            padding: 12px 20px;
             font-family: 'Poppins', sans-serif;
-            font-size: clamp(0.8rem, 1.4vh, 1rem);
+            font-size: 0.95rem;
             font-weight: 600;
             cursor: pointer;
             transition: background 0.2s;
@@ -589,7 +580,7 @@
            BANNED & TIMEOUT STATES
            ============================================= */
         .chat-banned-notice {
-            padding: clamp(8px, 1.2vh, 16px);
+            padding: 16px;
             text-align: center;
             background: var(--bg-secondary);
             border-top: 1px solid var(--border-color);
@@ -599,12 +590,12 @@
         .chat-banned-notice .banned-content {
             background: rgba(127, 29, 29, 0.3);
             border: 1px solid #7f1d1d;
-            border-radius: clamp(4px, 0.8vh, 8px);
-            padding: clamp(6px, 1vh, 12px) clamp(8px, 1.2vh, 16px);
+            border-radius: 8px;
+            padding: 12px 16px;
             font-family: 'Roboto', sans-serif;
             font-weight: 500;
             color: #fca5a5;
-            font-size: clamp(0.75rem, 1.3vh, 0.95rem);
+            font-size: 0.9rem;
         }
         
         .chat-banned-notice .banned-content strong {
@@ -616,10 +607,10 @@
         .timeout-notice {
             background: #7f1d1d;
             color: #fca5a5;
-            padding: clamp(4px, 0.8vh, 8px) clamp(8px, 1.2vh, 16px);
+            padding: 8px 16px;
             text-align: center;
             font-family: 'Roboto', sans-serif;
-            font-size: clamp(0.7rem, 1.2vh, 0.9rem);
+            font-size: 0.85rem;
             font-weight: 500;
             flex-shrink: 0;
         }
@@ -2864,42 +2855,74 @@
         }
         
         // =============================================
-        // CHAT HEIGHT SYNC (Desktop)
+        // UNIFORM SCALING (Desktop)
         // =============================================
         function initChatHeightSync() {
+            const container = document.querySelector('.container');
             const videoColumn = document.querySelector('.video-column');
             const chatColumn = document.getElementById('chatColumn');
             
-            if (!videoColumn || !chatColumn) return;
+            if (!container || !videoColumn || !chatColumn) return;
             
-            function syncChatHeight() {
-                // Only sync on desktop (when chat toggle button is hidden)
+            function scaleToFit() {
+                // Only apply scaling on desktop (when chat toggle button is hidden)
                 const chatToggleBtn = document.getElementById('chatToggleBtn');
                 if (chatToggleBtn && window.getComputedStyle(chatToggleBtn).display !== 'none') {
-                    // Tablet/mobile - remove fixed height
+                    // Tablet/mobile - remove scaling
+                    container.style.transform = '';
+                    container.style.width = '';
                     chatColumn.style.height = '';
                     chatColumn.style.maxHeight = '';
+                    document.body.style.overflow = '';
                     return;
                 }
                 
-                // Desktop - sync chat height to video column
+                // Desktop - apply uniform scaling
+                // Reset transform to measure natural size
+                container.style.transform = 'none';
+                container.style.width = '1400px';
+                
+                // Sync chat height to video column first
                 const videoColumnHeight = videoColumn.offsetHeight;
                 if (videoColumnHeight > 0) {
                     chatColumn.style.height = videoColumnHeight + 'px';
                     chatColumn.style.maxHeight = videoColumnHeight + 'px';
                 }
+                
+                // Get container's natural dimensions
+                const containerWidth = container.offsetWidth;
+                const containerHeight = container.offsetHeight;
+                
+                // Get viewport dimensions
+                const viewportWidth = window.innerWidth;
+                const viewportHeight = window.innerHeight;
+                
+                // Calculate scale to fit both dimensions
+                const scaleX = viewportWidth / containerWidth;
+                const scaleY = viewportHeight / containerHeight;
+                const scale = Math.min(scaleX, scaleY);
+                
+                // Apply uniform scale
+                container.style.transform = `scale(${scale})`;
+                container.style.transformOrigin = 'top left';
+                
+                // Prevent scrollbars
+                document.body.style.overflow = 'hidden';
             }
             
-            // Initial sync
-            syncChatHeight();
+            // Initial scale
+            // Use requestAnimationFrame to ensure layout is complete
+            requestAnimationFrame(() => {
+                scaleToFit();
+            });
             
-            // Sync on window resize
-            window.addEventListener('resize', syncChatHeight);
+            // Re-scale on window resize
+            window.addEventListener('resize', scaleToFit);
             
-            // Use ResizeObserver for more accurate updates (content changes, etc.)
+            // Re-scale when content changes (e.g., banner text updates)
             if (typeof ResizeObserver !== 'undefined') {
                 const resizeObserver = new ResizeObserver(() => {
-                    syncChatHeight();
+                    scaleToFit();
                 });
                 resizeObserver.observe(videoColumn);
             }
