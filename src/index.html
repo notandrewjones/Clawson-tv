@@ -597,6 +597,73 @@
         }
         
         /* =============================================
+           CHAT TOGGLE (Tablet slide-out)
+           ============================================= */
+        .chat-toggle-btn {
+            display: none; /* Hidden by default, shown on tablet */
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 50px;
+            padding: 14px 20px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(61, 155, 233, 0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .chat-toggle-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(61, 155, 233, 0.5);
+        }
+        
+        .chat-toggle-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .chat-toggle-btn .unread-badge {
+            background: #ef4444;
+            color: #fff;
+            font-size: 0.7rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-left: 4px;
+            display: none;
+        }
+        
+        .chat-toggle-btn .unread-badge.visible {
+            display: inline;
+        }
+        
+        .chat-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1001;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .chat-overlay.visible {
+            display: block;
+            opacity: 1;
+        }
+        
+        /* =============================================
            RESPONSIVE BREAKPOINTS
            ============================================= */
         
@@ -611,24 +678,137 @@
             }
         }
         
-        /* Tablets - Stack layout */
-        @media (max-width: 900px) {
+        /* Tablets - Slide-out chat panel */
+        @media (max-width: 900px) and (min-width: 601px) {
+            .container {
+                padding: 12px;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .video-column {
+                gap: 12px;
+            }
+            
+            .video-container {
+                border-radius: 10px;
+            }
+            
+            /* Banner - horizontal layout on tablet */
+            .content-banner {
+                flex-direction: row;
+                text-align: left;
+                gap: 16px;
+                padding: 16px 20px;
+                border-radius: 10px;
+                flex: 0 0 auto;
+            }
+            
+            .content-banner h2 {
+                font-size: 1.1rem;
+                margin-bottom: 4px;
+            }
+            
+            .content-banner p {
+                font-size: 0.9rem;
+                line-height: 1.4;
+            }
+            
+            .content-banner .cta-button {
+                padding: 12px 24px;
+                font-size: 0.9rem;
+            }
+            
+            .cue-content.active {
+                flex-direction: row;
+                gap: 16px;
+            }
+            
+            /* Show chat toggle button */
+            .chat-toggle-btn {
+                display: flex;
+            }
+            
+            /* Chat as slide-out panel */
+            .chat-column {
+                position: fixed;
+                top: 0;
+                right: -400px; /* Hidden off-screen */
+                width: 380px;
+                height: 100vh;
+                height: 100dvh;
+                border-radius: 0;
+                z-index: 1002;
+                transition: right 0.3s ease;
+                border: none;
+                border-left: 1px solid var(--border-color);
+            }
+            
+            .chat-column.open {
+                right: 0;
+            }
+            
+            .chat-header {
+                padding: 16px 20px;
+                position: relative;
+            }
+            
+            /* Close button in chat header */
+            .chat-close-btn {
+                display: flex;
+                background: none;
+                border: none;
+                color: var(--text-muted);
+                cursor: pointer;
+                padding: 4px;
+                border-radius: 4px;
+                transition: color 0.2s, background 0.2s;
+            }
+            
+            .chat-close-btn:hover {
+                color: var(--text-primary);
+                background: var(--bg-tertiary);
+            }
+            
+            .chat-close-btn svg {
+                width: 20px;
+                height: 20px;
+            }
+            
+            .chat-messages {
+                padding: 12px;
+            }
+            
+            .chat-input-area {
+                padding: 12px;
+            }
+            
+            .username-setup {
+                padding: 20px;
+            }
+        }
+        
+        /* Mobile phones - stacked layout fitting viewport */
+        @media (max-width: 600px) {
             html, body {
                 height: 100%;
                 overflow-x: hidden;
             }
             
             .container {
-                padding: 8px;
+                padding: 6px;
                 height: 100vh;
-                height: 100dvh; /* Dynamic viewport height for mobile browsers */
+                height: 100dvh;
                 display: flex;
                 flex-direction: column;
             }
             
             .main-content {
                 grid-template-columns: 1fr;
-                gap: 8px;
+                gap: 6px;
                 flex: 1;
                 min-height: 0;
                 display: flex;
@@ -636,8 +816,8 @@
             }
             
             .video-column {
-                gap: 8px;
-                flex: 0 0 auto; /* Don't grow, don't shrink, auto size */
+                gap: 6px;
+                flex: 0 0 auto;
             }
             
             .video-container {
@@ -648,112 +828,15 @@
             .content-banner {
                 flex-direction: column;
                 text-align: center;
-                gap: 10px;
-                padding: 12px 16px;
+                gap: 8px;
+                padding: 10px 12px;
                 border-radius: 8px;
-                flex: 0 0 auto; /* Don't grow on mobile */
+                flex: 0 0 auto;
             }
             
             .content-banner h2 {
-                font-size: 1rem;
+                font-size: 0.95rem;
                 margin-bottom: 0;
-            }
-            
-            .content-banner p {
-                font-size: 0.85rem;
-                line-height: 1.4;
-            }
-            
-            .content-banner .cta-button {
-                padding: 10px 20px;
-                font-size: 0.85rem;
-                width: auto;
-            }
-            
-            /* Cue content inside banner - also stack */
-            .cue-content.active {
-                flex-direction: column;
-                gap: 10px;
-            }
-            
-            .chat-column {
-                flex: 1;
-                min-height: 180px;
-                border-radius: 8px;
-            }
-            
-            .chat-header {
-                padding: 10px 12px;
-            }
-            
-            .chat-messages {
-                padding: 8px;
-            }
-            
-            .chat-input-area {
-                padding: 8px;
-            }
-            
-            .chat-input-wrapper {
-                gap: 8px;
-            }
-            
-            .chat-input {
-                padding: 10px 12px;
-                font-size: 16px; /* Prevents iOS zoom */
-            }
-            
-            .chat-send-btn {
-                padding: 10px 14px;
-                font-size: 0.85rem;
-            }
-            
-            .username-setup {
-                padding: 16px;
-            }
-            
-            .username-setup h3 {
-                font-size: 1.1rem;
-            }
-            
-            .username-setup p {
-                font-size: 0.9rem;
-                margin-bottom: 16px;
-            }
-            
-            .username-setup input {
-                max-width: 280px;
-                padding: 12px 16px;
-                font-size: 16px; /* Prevents iOS zoom */
-            }
-            
-            .username-setup button {
-                padding: 12px 28px;
-                font-size: 0.95rem;
-            }
-        }
-        
-        /* Large phones - More compact */
-        @media (max-width: 600px) {
-            .container {
-                padding: 6px;
-            }
-            
-            .main-content {
-                gap: 6px;
-            }
-            
-            .video-column {
-                gap: 6px;
-            }
-            
-            .content-banner {
-                padding: 10px 12px;
-                gap: 8px;
-            }
-            
-            .content-banner h2 {
-                font-size: 0.95rem;
             }
             
             .content-banner p {
@@ -764,6 +847,23 @@
             .content-banner .cta-button {
                 padding: 8px 16px;
                 font-size: 0.8rem;
+                width: auto;
+            }
+            
+            .cue-content.active {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            /* Chat inline on mobile */
+            .chat-column {
+                flex: 1;
+                min-height: 180px;
+                border-radius: 8px;
+                position: relative;
+                right: auto;
+                width: auto;
+                height: auto;
             }
             
             .chat-header {
@@ -808,8 +908,13 @@
                 padding: 6px;
             }
             
+            .chat-input-wrapper {
+                gap: 8px;
+            }
+            
             .chat-input {
                 padding: 8px 10px;
+                font-size: 16px; /* Prevents iOS zoom */
             }
             
             .chat-send-btn {
@@ -831,11 +936,17 @@
             
             .username-setup input {
                 max-width: 100%;
+                font-size: 16px; /* Prevents iOS zoom */
             }
             
             .username-setup button {
                 padding: 10px 24px;
                 font-size: 0.9rem;
+            }
+            
+            /* Hide close button on mobile (chat is inline) */
+            .chat-close-btn {
+                display: none;
             }
         }
         
@@ -874,7 +985,7 @@
             }
             
             .content-banner {
-                display: none; /* Hide banner in landscape to save space */
+                display: none;
             }
         }
         
@@ -1055,6 +1166,18 @@
     </style>
 </head>
 <body>
+    <!-- Chat Toggle Button (visible on tablet) -->
+    <button class="chat-toggle-btn" id="chatToggleBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+        </svg>
+        Chat
+        <span class="unread-badge" id="unreadBadge">0</span>
+    </button>
+    
+    <!-- Chat Overlay (visible when chat is open on tablet) -->
+    <div class="chat-overlay" id="chatOverlay"></div>
+    
     <div class="container">
         <div class="main-content">
             <!-- Left Column: Video + Banner -->
@@ -1083,10 +1206,19 @@
                         <span>💬 Live Chat</span>
                         <span class="online-count" id="onlineCount"></span>
                     </div>
-                    <div class="chat-user-info" id="chatUserInfo" style="display: none;">
-                        <span>Chatting as</span>
-                        <span class="username" id="currentUsername" title="Click to change"></span>
-                        <button class="mod-toggle" id="modToggle" style="display: none;">MOD</button>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <div class="chat-user-info" id="chatUserInfo" style="display: none;">
+                            <span>Chatting as</span>
+                            <span class="username" id="currentUsername" title="Click to change"></span>
+                            <button class="mod-toggle" id="modToggle" style="display: none;">MOD</button>
+                        </div>
+                        <!-- Close button for tablet slide-out -->
+                        <button class="chat-close-btn" id="chatCloseBtn" title="Close chat">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                        </button>
                     </div>
                 </div>
                 
@@ -1270,6 +1402,9 @@
             // Initialize chat
             console.log('About to call initChat()');
             initChat();
+            
+            // Initialize chat panel toggle (for tablet view)
+            initChatPanelToggle();
         }
         
         // =============================================
@@ -1710,6 +1845,11 @@
                             } else {
                                 // Show the scroll to bottom button
                                 document.getElementById('scrollToBottomBtn').classList.add('visible');
+                            }
+                            
+                            // Increment unread count for tablet panel (if message is from someone else)
+                            if (data.user_id !== chatUser?.id) {
+                                incrementUnreadCount();
                             }
                         }
                     }
@@ -2566,6 +2706,95 @@
                 return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
             }
             return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+        
+        // =============================================
+        // CHAT PANEL TOGGLE (Tablet slide-out)
+        // =============================================
+        let chatPanelOpen = false;
+        let unreadCount = 0;
+        
+        function initChatPanelToggle() {
+            const chatToggleBtn = document.getElementById('chatToggleBtn');
+            const chatCloseBtn = document.getElementById('chatCloseBtn');
+            const chatOverlay = document.getElementById('chatOverlay');
+            const chatColumn = document.getElementById('chatColumn');
+            
+            if (!chatToggleBtn || !chatColumn) return;
+            
+            // Open chat panel
+            chatToggleBtn.addEventListener('click', () => {
+                openChatPanel();
+            });
+            
+            // Close chat panel
+            if (chatCloseBtn) {
+                chatCloseBtn.addEventListener('click', () => {
+                    closeChatPanel();
+                });
+            }
+            
+            // Close on overlay click
+            if (chatOverlay) {
+                chatOverlay.addEventListener('click', () => {
+                    closeChatPanel();
+                });
+            }
+            
+            // Close on escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && chatPanelOpen) {
+                    closeChatPanel();
+                }
+            });
+        }
+        
+        function openChatPanel() {
+            const chatColumn = document.getElementById('chatColumn');
+            const chatOverlay = document.getElementById('chatOverlay');
+            const unreadBadge = document.getElementById('unreadBadge');
+            
+            chatColumn.classList.add('open');
+            chatOverlay.classList.add('visible');
+            chatPanelOpen = true;
+            
+            // Reset unread count
+            unreadCount = 0;
+            if (unreadBadge) {
+                unreadBadge.textContent = '0';
+                unreadBadge.classList.remove('visible');
+            }
+            
+            // Prevent body scroll when panel is open
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeChatPanel() {
+            const chatColumn = document.getElementById('chatColumn');
+            const chatOverlay = document.getElementById('chatOverlay');
+            
+            chatColumn.classList.remove('open');
+            chatOverlay.classList.remove('visible');
+            chatPanelOpen = false;
+            
+            // Restore body scroll
+            document.body.style.overflow = '';
+        }
+        
+        // Function to increment unread count (called when new messages arrive while panel is closed)
+        function incrementUnreadCount() {
+            // Only show unread badge on tablet view when chat is closed
+            const chatToggleBtn = document.getElementById('chatToggleBtn');
+            if (!chatToggleBtn || window.getComputedStyle(chatToggleBtn).display === 'none') return;
+            
+            if (!chatPanelOpen) {
+                unreadCount++;
+                const unreadBadge = document.getElementById('unreadBadge');
+                if (unreadBadge) {
+                    unreadBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
+                    unreadBadge.classList.add('visible');
+                }
+            }
         }
         
         // =============================================
