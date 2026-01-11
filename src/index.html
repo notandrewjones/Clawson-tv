@@ -1431,6 +1431,7 @@
         let isTimedOut = false;
         let timeoutEndTime = null;
         let timeoutCheckInterval = null;
+        let isStreamLive = false; // Default to offline until confirmed live
         
         // Auto-scroll state
         let autoScrollEnabled = true;
@@ -1783,9 +1784,8 @@
             document.getElementById('chatUserInfo').style.display = 'flex';
             document.getElementById('currentUsername').textContent = chatUser.username;
             
-            // Check if stream is live before showing input
-            const isLive = eventConfig && eventConfig.is_live;
-            if (isLive) {
+            // Default to offline - only show input if we've confirmed stream is live
+            if (isStreamLive) {
                 document.getElementById('chatInputArea').style.display = 'block';
                 document.getElementById('chatOfflineNotice').style.display = 'none';
             } else {
@@ -2652,12 +2652,21 @@
         // CHAT AVAILABILITY (Live vs Offline)
         // =============================================
         function updateChatAvailability(isLive) {
+            // Update global flag
+            isStreamLive = isLive;
+            
             const chatInputArea = document.getElementById('chatInputArea');
             const chatOfflineNotice = document.getElementById('chatOfflineNotice');
             const chatBannedNotice = document.getElementById('chatBannedNotice');
+            const usernameSetup = document.getElementById('usernameSetup');
             
             // Don't change anything if user is banned - ban takes priority
             if (chatBannedNotice && chatBannedNotice.style.display !== 'none') {
+                return;
+            }
+            
+            // Don't change input area if user hasn't logged in yet
+            if (usernameSetup && usernameSetup.style.display !== 'none') {
                 return;
             }
             
