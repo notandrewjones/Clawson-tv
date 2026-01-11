@@ -602,6 +602,31 @@
             color: #ef4444;
         }
         
+        .chat-offline-notice {
+            padding: 16px;
+            text-align: center;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+        
+        .chat-offline-notice .offline-content {
+            background: rgba(61, 155, 233, 0.15);
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-family: 'Roboto', sans-serif;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .chat-offline-notice .offline-content strong {
+            font-family: 'Poppins', sans-serif;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
         .timeout-notice {
             background: #7f1d1d;
             color: #fca5a5;
@@ -1295,6 +1320,14 @@
                         You can no longer send messages in this chat.
                     </div>
                 </div>
+                
+                <!-- Offline Notice - replaces input area when not live -->
+                <div class="chat-offline-notice" id="chatOfflineNotice" style="display: none;">
+                    <div class="offline-content">
+                        <strong>💬 Chat Offline</strong><br>
+                        Chat is only available during live services.
+                    </div>
+                </div>
             </div>
         </div>
         
@@ -1747,9 +1780,18 @@
         function showChatInterface() {
             document.getElementById('usernameSetup').style.display = 'none';
             document.getElementById('chatMessages').style.display = 'flex';
-            document.getElementById('chatInputArea').style.display = 'block';
             document.getElementById('chatUserInfo').style.display = 'flex';
             document.getElementById('currentUsername').textContent = chatUser.username;
+            
+            // Check if stream is live before showing input
+            const isLive = eventConfig && eventConfig.is_live;
+            if (isLive) {
+                document.getElementById('chatInputArea').style.display = 'block';
+                document.getElementById('chatOfflineNotice').style.display = 'none';
+            } else {
+                document.getElementById('chatInputArea').style.display = 'none';
+                document.getElementById('chatOfflineNotice').style.display = 'block';
+            }
             
             // Show mod toggle if moderator
             if (isModerator) {
@@ -1817,6 +1859,7 @@
             document.getElementById('usernameSetup').style.display = 'none';
             document.getElementById('chatMessages').style.display = 'flex';
             document.getElementById('chatInputArea').style.display = 'none';
+            document.getElementById('chatOfflineNotice').style.display = 'none';
             document.getElementById('chatBannedNotice').style.display = 'block';
             document.getElementById('chatUserInfo').style.display = 'none';
             console.log('chatMessages display:', document.getElementById('chatMessages').style.display);
@@ -2570,13 +2613,21 @@
         }
         
         function detectLiveStream() {
+            let hasCheckedOnce = false;
+            
             // Wait a moment for video metadata to load
             const checkLive = () => {
                 // Live streams typically have infinite or very large duration
                 const isLive = !isFinite(video.duration) || video.duration > 86400;
                 
-                if (eventConfig && eventConfig.is_live !== isLive) {
-                    eventConfig.is_live = isLive;
+                // On first check OR when status changes, update everything
+                if (!hasCheckedOnce || (eventConfig && eventConfig.is_live !== isLive)) {
+                    hasCheckedOnce = true;
+                    
+                    if (eventConfig) {
+                        eventConfig.is_live = isLive;
+                    }
+                    
                     document.getElementById('debugMode').textContent = isLive ? 'LIVE' : 'VOD';
                     document.getElementById('debugMode').classList.toggle('live', isLive);
                     
@@ -2585,6 +2636,9 @@
                     } else {
                         stopLiveTimeTracking();
                     }
+                    
+                    // Update chat availability based on live status
+                    updateChatAvailability(isLive);
                 }
             };
             
@@ -2592,6 +2646,32 @@
             video.addEventListener('loadedmetadata', checkLive);
             video.addEventListener('durationchange', checkLive);
             setTimeout(checkLive, 2000); // Fallback check
+        }
+        
+        // =============================================
+        // CHAT AVAILABILITY (Live vs Offline)
+        // =============================================
+        function updateChatAvailability(isLive) {
+            const chatInputArea = document.getElementById('chatInputArea');
+            const chatOfflineNotice = document.getElementById('chatOfflineNotice');
+            const chatBannedNotice = document.getElementById('chatBannedNotice');
+            
+            // Don't change anything if user is banned - ban takes priority
+            if (chatBannedNotice && chatBannedNotice.style.display !== 'none') {
+                return;
+            }
+            
+            if (isLive) {
+                // Show chat input, hide offline notice
+                if (chatInputArea) chatInputArea.style.display = 'block';
+                if (chatOfflineNotice) chatOfflineNotice.style.display = 'none';
+                console.log('Chat enabled: Stream is live');
+            } else {
+                // Hide chat input, show offline notice
+                if (chatInputArea) chatInputArea.style.display = 'none';
+                if (chatOfflineNotice) chatOfflineNotice.style.display = 'block';
+                console.log('Chat disabled: Stream is not live');
+            }
         }
         
         function onTimeUpdate() {
