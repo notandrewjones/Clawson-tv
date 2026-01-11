@@ -136,9 +136,19 @@
             min-height: 0;
         }
         
+        /* Hide entire banner if completely empty */
+        .content-banner:has(.banner-text:empty):has(.cta-button[style*="display: none"]) {
+            display: none;
+        }
+        
         .content-banner .banner-text {
             flex: 1;
             min-width: 0;
+        }
+        
+        /* When only one line of text, remove margin for cleaner centering */
+        .content-banner .banner-text.single-line h2 {
+            margin-bottom: 0;
         }
         
         .content-banner h2 {
@@ -2637,6 +2647,7 @@
             const headlineEl = document.getElementById('content-headline');
             const bodyEl = document.getElementById('content-body');
             const buttonEl = document.getElementById('content-button');
+            const bannerTextEl = document.querySelector('.content-banner .banner-text');
             
             // Default content (when no cue is active)
             const defaults = {
@@ -2646,30 +2657,61 @@
                 button_url: 'https://clawson.churchcenter.com/people/forms/409083'
             };
             
+            let headline = '';
+            let bodyText = '';
+            let buttonText = '';
+            let buttonUrl = '';
+            
             if (cue) {
-                // Use cue data, falling back to defaults if fields are empty
-                headlineEl.textContent = cue.headline || cue.cue_type.charAt(0).toUpperCase() + cue.cue_type.slice(1);
-                bodyEl.textContent = cue.body_text || '';
-                
-                if (cue.button_url && cue.button_text) {
-                    buttonEl.textContent = cue.button_text;
-                    buttonEl.href = cue.button_url;
-                    buttonEl.style.display = 'inline-block';
-                } else if (cue.button_url) {
-                    buttonEl.textContent = 'Learn More';
-                    buttonEl.href = cue.button_url;
-                    buttonEl.style.display = 'inline-block';
-                } else {
-                    // Hide button if no URL provided
-                    buttonEl.style.display = 'none';
-                }
+                headline = cue.headline || '';
+                bodyText = cue.body_text || '';
+                buttonText = cue.button_text || '';
+                buttonUrl = cue.button_url || '';
             } else {
-                // Show default content
-                headlineEl.textContent = defaults.headline;
-                bodyEl.textContent = defaults.body_text;
-                buttonEl.textContent = defaults.button_text;
-                buttonEl.href = defaults.button_url;
+                headline = defaults.headline;
+                bodyText = defaults.body_text;
+                buttonText = defaults.button_text;
+                buttonUrl = defaults.button_url;
+            }
+            
+            // Update headline - hide if empty
+            if (headline.trim()) {
+                headlineEl.textContent = headline;
+                headlineEl.style.display = 'block';
+            } else {
+                headlineEl.style.display = 'none';
+            }
+            
+            // Update body - hide if empty
+            if (bodyText.trim()) {
+                bodyEl.textContent = bodyText;
+                bodyEl.style.display = 'block';
+            } else {
+                bodyEl.style.display = 'none';
+            }
+            
+            // Update button - hide if no URL
+            if (buttonUrl.trim()) {
+                buttonEl.textContent = buttonText.trim() || 'Learn More';
+                buttonEl.href = buttonUrl;
                 buttonEl.style.display = 'inline-block';
+            } else {
+                buttonEl.style.display = 'none';
+            }
+            
+            // Adjust banner-text alignment based on what's visible
+            // Center vertically if only one text element is shown
+            const hasHeadline = headline.trim();
+            const hasBody = bodyText.trim();
+            
+            if (bannerTextEl) {
+                if (hasHeadline && hasBody) {
+                    // Both visible - normal alignment
+                    bannerTextEl.classList.remove('single-line');
+                } else {
+                    // Only one or neither - center the text
+                    bannerTextEl.classList.add('single-line');
+                }
             }
         }
         
