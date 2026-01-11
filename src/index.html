@@ -699,7 +699,13 @@
         
         /* Tablets - Slide-out chat panel */
         @media (max-width: 900px) and (min-width: 601px) {
+            html, body {
+                overflow: auto; /* Re-enable scrolling */
+            }
+            
             .container {
+                width: 100% !important;
+                transform: none !important;
                 padding: 12px;
             }
             
@@ -757,8 +763,9 @@
                 top: 0;
                 right: -400px; /* Hidden off-screen */
                 width: 380px;
-                height: 100vh;
-                height: 100dvh;
+                height: 100vh !important;
+                height: 100dvh !important;
+                max-height: none !important;
                 border-radius: 0;
                 z-index: 1002;
                 transition: right 0.3s ease;
@@ -815,9 +822,12 @@
             html, body {
                 height: 100%;
                 overflow-x: hidden;
+                overflow-y: auto;
             }
             
             .container {
+                width: 100% !important;
+                transform: none !important;
                 padding: 6px;
                 height: 100vh;
                 height: 100dvh;
@@ -885,7 +895,8 @@
                 position: relative;
                 right: auto;
                 width: auto;
-                height: auto;
+                height: auto !important;
+                max-height: none !important;
             }
             
             .chat-header {
