@@ -99,7 +99,7 @@
             /* Chat width scales with viewport: ~27% of container */
             grid-template-columns: 1fr clamp(280px, 27vw, 380px);
             gap: clamp(10px, 1.2vw, 16px);
-            align-items: stretch;
+            align-items: start; /* Chat sizes to its content, not video column */
         }
         
         /* Left column: Video + Banner */
@@ -132,7 +132,7 @@
             align-items: center;
             gap: clamp(10px, 1.2vw, 16px);
             border: 1px solid var(--border-color);
-            flex: 1; /* Allow banner to grow to fill remaining space */
+            flex: 0 0 auto; /* Don't grow - natural height only */
             min-height: 0;
         }
         
@@ -197,8 +197,11 @@
             background: var(--bg-secondary);
             border-radius: clamp(8px, 0.9vw, 12px);
             overflow: hidden;
-            /* No fixed height - stretches to match video column */
             border: 1px solid var(--border-color);
+            /* Match height of video column (video + gap + banner) */
+            /* Video is 16:9 aspect ratio, so height depends on width */
+            max-height: calc(100vh - clamp(16px, 2.4vw, 32px)); /* Viewport minus padding */
+            height: fit-content;
         }
         
         .chat-header {
@@ -1425,6 +1428,9 @@
             
             // Initialize chat panel toggle (for tablet view)
             initChatPanelToggle();
+            
+            // Sync chat height to video column (desktop only)
+            initChatHeightSync();
         }
         
         // =============================================
@@ -2846,6 +2852,48 @@
                     unreadBadge.textContent = unreadCount > 99 ? '99+' : unreadCount;
                     unreadBadge.classList.add('visible');
                 }
+            }
+        }
+        
+        // =============================================
+        // CHAT HEIGHT SYNC (Desktop)
+        // =============================================
+        function initChatHeightSync() {
+            const videoColumn = document.querySelector('.video-column');
+            const chatColumn = document.getElementById('chatColumn');
+            
+            if (!videoColumn || !chatColumn) return;
+            
+            function syncChatHeight() {
+                // Only sync on desktop (when chat toggle button is hidden)
+                const chatToggleBtn = document.getElementById('chatToggleBtn');
+                if (chatToggleBtn && window.getComputedStyle(chatToggleBtn).display !== 'none') {
+                    // Tablet/mobile - remove fixed height
+                    chatColumn.style.height = '';
+                    chatColumn.style.maxHeight = '';
+                    return;
+                }
+                
+                // Desktop - sync chat height to video column
+                const videoColumnHeight = videoColumn.offsetHeight;
+                if (videoColumnHeight > 0) {
+                    chatColumn.style.height = videoColumnHeight + 'px';
+                    chatColumn.style.maxHeight = videoColumnHeight + 'px';
+                }
+            }
+            
+            // Initial sync
+            syncChatHeight();
+            
+            // Sync on window resize
+            window.addEventListener('resize', syncChatHeight);
+            
+            // Use ResizeObserver for more accurate updates (content changes, etc.)
+            if (typeof ResizeObserver !== 'undefined') {
+                const resizeObserver = new ResizeObserver(() => {
+                    syncChatHeight();
+                });
+                resizeObserver.observe(videoColumn);
             }
         }
         
